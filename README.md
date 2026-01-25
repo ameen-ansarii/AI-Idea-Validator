@@ -1,6 +1,6 @@
 
 <div align="center">
-  <img src="public/readme-assets/banner.png" alt="AI Idea Validator Banner" width="100%" />
+ 
 
   <h1 style="font-size: 3rem; font-weight: bold; margin-top: 20px;">AI Idea Validator</h1>
   
