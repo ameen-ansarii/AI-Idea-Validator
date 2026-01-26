@@ -144,7 +144,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center p-6 relative pt-32 font-sans selection:bg-blue-500/30">
+    <main className="min-h-screen flex flex-col items-center p-4 md:p-6 relative pt-20 md:pt-32 font-sans selection:bg-blue-500/30">
 
       <Dock />
 
@@ -169,7 +169,7 @@ export default function Home() {
             <span className="text-xs font-semibold tracking-wide uppercase text-black/60">Intelligence V2.0</span>
           </motion.div>
 
-          <h1 className="text-7xl md:text-9xl font-bold tracking-tighter text-black/90">
+          <h1 className="text-5xl sm:text-7xl md:text-9xl font-bold tracking-tighter text-black/90">
             <MaskedText text="Validate." delay={0.1} />
             <MaskedText text="Instantly." delay={0.3} className="text-black/30" />
           </h1>
@@ -178,7 +178,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="text-2xl md:text-3xl text-black/60 max-w-2xl mx-auto font-light leading-snug"
+            className="text-lg sm:text-xl md:text-3xl text-black/60 max-w-2xl mx-auto font-light leading-snug px-4"
           >
             Brutal, data-driven feedback for your startup idea.
             <span className="text-black font-medium"> No fluff.</span>
@@ -196,16 +196,16 @@ export default function Home() {
               className="max-w-4xl mx-auto"
             >
               <div className="macos-card p-1 relative overflow-hidden group">
-                <div className="relative bg-white/40 rounded-[24px] p-8 md:p-12">
+                <div className="relative bg-white/40 rounded-[24px] p-6 md:p-8 lg:p-12">
                   <textarea
                     value={idea}
                     onChange={(e) => setIdea(e.target.value)}
                     placeholder="Describe your idea based on first principles..."
-                    className="w-full h-40 bg-transparent border-none text-2xl md:text-4xl text-black/90 placeholder-black/20 resize-none focus:ring-0 focus:outline-none font-medium leading-tight selection:bg-blue-200"
+                    className="w-full h-32 md:h-40 bg-transparent border-none text-lg sm:text-xl md:text-4xl text-black/90 placeholder-black/20 resize-none focus:ring-0 focus:outline-none font-medium leading-tight selection:bg-blue-200"
                   />
 
-                  <div className="flex justify-between items-center mt-12 pt-8 border-t border-black/5">
-                    <div className="flex items-center gap-6 text-sm font-medium text-black/40">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-8 md:mt-12 pt-6 md:pt-8 border-t border-black/5">
+                    <div className="flex flex-wrap items-center gap-3 md:gap-6 text-xs md:text-sm font-medium text-black/40">
                       <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-green-500" /> Live Analysis</span>
                       <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Market Data</span>
                     </div>
@@ -213,10 +213,10 @@ export default function Home() {
                     <button
                       onClick={handleAnalyze}
                       disabled={!idea.trim()}
-                      className="liquid-button px-10 py-4 text-lg flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed group"
+                      className="liquid-button px-6 md:px-10 py-3 md:py-4 text-base md:text-lg flex items-center gap-2 md:gap-3 disabled:opacity-50 disabled:cursor-not-allowed group w-full sm:w-auto justify-center"
                     >
                       Validate Idea
-                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
                     </button>
                   </div>
                 </div>
@@ -243,7 +243,7 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
-            className="grid grid-cols-1 md:grid-cols-4 grid-rows-[auto] gap-6 pb-32"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 grid-rows-[auto] gap-4 md:gap-6 pb-20 md:pb-32"
           >
             {/* Top Actions Header */}
             <motion.div
@@ -252,14 +252,14 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
             >
               <div className="flex flex-col items-start w-full md:w-auto">
-                <h2 className="text-3xl font-bold text-black/80 tracking-tight">Analysis Report</h2>
-                <p className="text-black/40 text-sm">Generated by AI Validator</p>
+                <h2 className="text-2xl md:text-3xl font-bold text-black/80 tracking-tight">Analysis Report</h2>
+                <p className="text-black/40 text-xs md:text-sm">Generated by AI Validator</p>
               </div>
 
-              <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+              <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto justify-start md:justify-end">
                 <button
                   onClick={handleShare}
-                  className="px-6 py-2.5 rounded-full bg-white text-black hover:bg-gray-50 transition-all font-medium flex items-center gap-2 shadow-sm hover:shadow-md border border-black/5 active:scale-95 text-sm"
+                  className="px-4 md:px-6 py-2 md:py-2.5 rounded-full bg-white text-black hover:bg-gray-50 transition-all font-medium flex items-center gap-2 shadow-sm hover:shadow-md border border-black/5 active:scale-95 text-xs md:text-sm flex-1 sm:flex-none justify-center"
                 >
                   {isCopied ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4 text-blue-500" />}
                   {isCopied ? "Copied" : "Share"}
@@ -302,9 +302,9 @@ export default function Home() {
               )} />
 
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-widest text-black/40 mb-2">Final Verdict</h3>
+                <h3 className="text-xs md:text-sm font-bold uppercase tracking-widest text-black/40 mb-2">Final Verdict</h3>
                 <h2 className={clsx(
-                  "text-5xl md:text-6xl font-bold tracking-tighter leading-none",
+                  "text-4xl sm:text-5xl md:text-6xl font-bold tracking-tighter leading-none",
                   report.verdict === "Build Now" ? "text-green-600" :
                     report.verdict === "Build with Caution" ? "text-yellow-600" : "text-red-600"
                 )}>
