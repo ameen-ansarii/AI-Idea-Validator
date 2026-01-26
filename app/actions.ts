@@ -1,112 +1,152 @@
 "use server";
 
-import OpenAI from "openai";
+import Groq from "groq-sdk";
 import { ValidationReport } from "./types";
 
-export async function validateIdea(idea: string): Promise<ValidationReport> {
-    const apiKey = process.env.OPENROUTER_API_KEY;
+// Groq Configuration - Super fast and generous free tier!
+const MODEL_NAME = "llama-3.3-70b-versatile";
 
+const getGroq = () => {
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-        console.error("API Key missing. Make sure OPENROUTER_API_KEY is set in .env.local");
-        throw new Error("Server configuration error: Missing API Key.");
+        throw new Error("Missing GROQ_API_KEY in .env.local");
     }
-
-    const openai = new OpenAI({
-        baseURL: "https://openrouter.ai/api/v1",
+    
+    return new Groq({
         apiKey: apiKey,
-        defaultHeaders: {
-            "HTTP-Referer": "https://ideavalidator.com", // Optional, for OpenRouter rankings
-            "X-Title": "AI Idea Validator", // Optional, for OpenRouter rankings
-        },
     });
+};
 
-    const systemPrompt = `
-    You are an expert startup analyst and product validator. 
-    Your task is to provide a strict, realistic, non-motivational evaluation of a startup idea.
-    
-    Rules:
-    - Avoid hype, encouragement, or emotional language.
-    - Be blunt but constructive.
-    - If the idea is weak, clearly say so.
-    - Do not give legal or financial advice.
-    
-    Output strictly in valid JSON format matching this interface:
-    {
-      "summary": "Rewrite the idea in 2-3 clear sentences.",
-      "targetUsers": "Primary and secondary user groups.",
-      "problemSeverity": number (1-10),
-      "severityJustification": "Brief justification of the score.",
-      "marketDemand": "Low" | "Medium" | "High",
-      "demandJustification": "Why is demand at this level?",
-      "monetizationPaths": ["Path 1", "Path 2", ...],
-      "alternatives": ["Competitor 1", "Substitute 2", ...],
-      "risks": "Key risks and blind spots.",
-      "mvpScope": "Smallest usable version definition. Exclude future features.",
-      "verdict": "Build Now" | "Build with Caution" | "Pivot Required" | "Not Worth Pursuing",
-      "verdictJustification": "2-3 sentences justifying the verdict.",
-      "confidenceScore": "Low" | "Medium" | "High",
-      "confidenceJustification": "One line explaining why confidence is not 100%.",
-      "whyItFails": "Brutally honest paragraph on why this usually fails (e.g. wrong audience, distribution, bias).",
-      "whoShouldNotBuild": "One sentence description of who should NOT build this (e.g. 'Not for first-time founders')."
-    }
-  `;
+export async function validateIdea(idea: string): Promise<ValidationReport> {
+    const client = getGroq();
 
-    const maxRetries = 3;
-    let attempt = 0;
+    const systemPrompt = `You are an expert startup analyst and product validator. 
+Your task is to provide a strict, realistic, non-motivational evaluation of a startup idea.
 
-    while (attempt < maxRetries) {
-        try {
-            const completion = await openai.chat.completions.create({
-                model: "google/gemini-2.0-flash-exp:free",
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: `Evaluate this idea: "${idea}"` }
-                ],
-                // Removing strict json_object requirement as it can be flaky with experimental models
-                // response_format: { type: "json_object" } 
-            });
+Rules:
+- Avoid hype, encouragement, or emotional language.
+- Be blunt but constructive.
+- If the idea is weak, clearly say so.
+- Do not give legal or financial advice.
 
-            const content = completion.choices[0].message.content;
-            if (!content) {
-                // Log the full response for debugging
-                console.error("OpenAI Response Empty:", JSON.stringify(completion, null, 2));
-                throw new Error("Received empty response from AI");
-            }
+You MUST respond with ONLY a valid JSON object matching this exact schema:
+{
+  "summary": "string",
+  "targetUsers": "string",
+  "problemSeverity": number (1-10),
+  "severityJustification": "string",
+  "marketDemand": "string (High/Medium/Low)",
+  "demandJustification": "string",
+  "monetizationPaths": ["string"],
+  "alternatives": ["string"],
+  "risks": "string",
+  "mvpScope": "string",
+  "verdict": "string (Promising/Questionable/Weak)",
+  "verdictJustification": "string",
+  "confidenceScore": "string (1-10)",
+  "confidenceJustification": "string",
+  "whyItFails": "string",
+  "whoShouldNotBuild": "string"
+}`;
 
-            // Try to parse JSON, cleaning up potential markdown code blocks if the model adds them
-            const cleanContent = content.replace(/```json\n?|\n?```/g, "").trim();
+    try {
+        console.log("🚀 Starting validation with OpenRouter...");
+        console.log("📋 Model:", MODEL_NAME);
+        
+        const completion = await client.chat.completions.create({
+            model: MODEL_NAME,
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: `Evaluate this startup idea: "${idea}"` }
+            ],
+            temperature: 0.7,
+            max_tokens: 2000,
+        });
 
-            try {
-                const report: ValidationReport = JSON.parse(cleanContent);
-                return report;
-            } catch (jsonError) {
-                console.error("JSON Parse Error:", jsonError, "Content:", content);
-                throw new Error("AI returned invalid JSON. Please try again.");
-            }
-
-        } catch (error: any) {
-            // Check for Rate Limit (429) or Server Error (5xx)
-            const isRateLimit = error?.status === 429 || error?.code === 429 || error?.message?.includes("429");
-
-            if (isRateLimit && attempt < maxRetries - 1) {
-                attempt++;
-                const delay = 1000 * Math.pow(2, attempt); // 2s, 4s, 8s
-                console.log(`429 Rate Limit hit. Retrying in ${delay}ms... (Attempt ${attempt + 1}/${maxRetries})`);
-                await new Promise(res => setTimeout(res, delay));
-                continue;
-            }
-
-            console.error("AI Validation Error:", error);
-            const errorMessage = error?.message || error?.toString() || "Unknown error";
-
-            // Provide a friendly error for 429 if retries fail
-            if (isRateLimit) {
-                throw new Error("Traffic is high on the free AI model. Please wait a moment and try again.");
-            }
-
-            throw new Error(`Validation failed: ${errorMessage}`);
+        console.log("✅ Received response from OpenRouter");
+        const response = completion.choices[0]?.message?.content || "";
+        console.log("📝 Response preview:", response.substring(0, 100));
+        
+        // Clean up markdown code blocks if present
+        const cleanContent = response.replace(/```json\n?|\n?```/g, "").trim();
+        
+        if (!cleanContent || cleanContent === "{}") {
+            throw new Error("Received empty response from AI");
         }
-    }
 
-    throw new Error("Failed to validate idea after multiple attempts.");
+        const parsed = JSON.parse(cleanContent) as ValidationReport;
+        console.log("✅ Successfully parsed JSON response");
+        return parsed;
+    } catch (error: any) {
+        console.error("❌ OpenRouter Validation Error:");
+        console.error("Error message:", error.message);
+        console.error("Error details:", error.response?.data || error);
+        throw new Error(`Validation failed: ${error.message || "Unknown error"}`);
+    }
 }
+
+export async function pivotIdea(originalIdea: string): Promise<string> {
+    const client = getGroq();
+    
+    const systemPrompt = `You are a genius startup pivot machine.
+Your goal is to take a weak or common idea and "pivot" it into something 10x better, deeper, or more niche.
+
+Rules:
+- Keep the core valid connection (same industry or problem).
+- Change the mechanism, business model, or target audience to make it viable.
+- Output ONLY the new idea text. 2 sentences max.
+- Be creative and specific.`;
+
+    try {
+        const completion = await client.chat.completions.create({
+            model: MODEL_NAME,
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: `Pivot this idea into a unicorn startup concept: "${originalIdea}"` }
+            ],
+            temperature: 0.9,
+            max_tokens: 200,
+        });
+
+        return completion.choices[0]?.message?.content || "Could not generate pivot. Please try again.";
+    } catch (error: any) {
+        console.error("Pivot Error:", error);
+        return "Could not generate pivot. Please try again.";
+    }
+}
+
+export async function generateRoadmap(idea: string): Promise<any[]> {
+    const client = getGroq();
+    
+    const systemPrompt = `You are an expert startup CTO and Project Manager.
+Create a strict 4-Week Execution Plan (Roadmap) for this idea.
+
+You MUST respond with ONLY a valid JSON array in this exact format:
+[
+  { "week": "Week 1", "title": "Validation & Foundations", "tasks": ["Task 1", "Task 2", "Task 3"] },
+  { "week": "Week 2", "title": "MVP Build (Core)", "tasks": ["Task 1", "Task 2", "Task 3"] },
+  { "week": "Week 3", "title": "Launch & Feedback", "tasks": ["Task 1", "Task 2", "Task 3"] },
+  { "week": "Week 4", "title": "Iterate & Scale", "tasks": ["Task 1", "Task 2", "Task 3"] }
+]`;
+
+    try {
+        const completion = await client.chat.completions.create({
+            model: MODEL_NAME,
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: `Create a detailed roadmap for: "${idea}"` }
+            ],
+            temperature: 0.7,
+            max_tokens: 1500,
+        });
+
+        const response = completion.choices[0]?.message?.content || "";
+        const cleanContent = response.replace(/```json\n?|\n?```/g, "").trim();
+        
+        return JSON.parse(cleanContent);
+    } catch (error: any) {
+        console.error("Roadmap Error:", error);
+        throw new Error("Failed to generate roadmap.");
+    }
+}
+

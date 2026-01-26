@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import clsx from "clsx";
 import Link from "next/link";
-import { Home, Info, Scale, ExternalLink } from "lucide-react";
+import { Home, Info, Scale, ExternalLink, History as HistoryIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 export default function Dock() {
@@ -11,6 +11,7 @@ export default function Dock() {
 
     const dockItems = [
         { label: "Validator", icon: Home, href: "/" },
+        { label: "History", icon: HistoryIcon, href: "/history" },
         { label: "About", icon: Info, href: "/about" },
         { label: "Legal", icon: Scale, href: "/legal" },
     ];

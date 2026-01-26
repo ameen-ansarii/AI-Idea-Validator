@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import MaskedText from "../components/MaskedText";
+import Dock from "../components/Dock/Dock";
 
 export default function LegalPage() {
     return (
@@ -13,11 +14,14 @@ export default function LegalPage() {
                     </h1>
                 </div>
 
+                <Dock />
+                <div className="bg-aurora" />
+
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="prose prose-lg prose-gray bg-white/40 backdrop-blur-md p-10 rounded-3xl border border-white/20 shadow-sm"
+                    className="prose prose-lg prose-gray macos-card p-10 max-w-none"
                 >
                     <h3>Terms of Service</h3>
                     <p>

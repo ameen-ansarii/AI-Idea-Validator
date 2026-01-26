@@ -3,11 +3,12 @@
 import { motion } from "framer-motion";
 import FAQItem from "../components/FAQItem";
 import MaskedText from "../components/MaskedText";
+import Dock from "../components/Dock/Dock";
 
 const faqs = [
     {
         question: "How reliable is the AI validation?",
-        answer: "We use advanced LLMs (Gemini 2.0 Flash) configured with strict parameters. It acts as a neutral third-party critic, free from the emotional bias that friends and family have."
+        answer: "We use advanced LLMs (Google Gemma 2) configured with strict parameters. It acts as a neutral third-party critic, free from the emotional bias that friends and family have."
     },
     {
         question: "Is my idea safe?",
@@ -26,6 +27,8 @@ const faqs = [
 export default function AboutPage() {
     return (
         <main className="min-h-screen flex flex-col items-center p-6 pt-32 relative overflow-hidden">
+            <Dock />
+            <div className="bg-aurora" />
 
             <div className="max-w-4xl w-full z-10">
                 <div className="text-center mb-16 space-y-6">

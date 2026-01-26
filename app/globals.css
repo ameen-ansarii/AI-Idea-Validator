@@ -34,6 +34,7 @@ body {
 }
 
 /* --- Moving Aurora Background --- */
+/* --- Moving Aurora Background (Optimized) --- */
 .bg-aurora {
   position: fixed;
   top: 0;
@@ -41,22 +42,55 @@ body {
   width: 100vw;
   height: 100vh;
   z-index: -1;
+  background-color: #ffffff;
+  /* Use naturally soft gradients instead of heavy blur filters */
   background:
-    radial-gradient(at 0% 0%, rgba(255, 107, 107, 0.15) 0px, transparent 50%),
-    radial-gradient(at 98% 1%, rgba(78, 205, 196, 0.15) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(255, 230, 109, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(26, 83, 92, 0.1) 0px, transparent 50%);
-  filter: blur(60px);
-  animation: aurora-shift 20s infinite alternate linear;
+    radial-gradient(at 18% 99%, rgba(206, 222, 255, 0.5) 0px, transparent 50%),
+    radial-gradient(at 93% 13%, rgba(230, 209, 255, 0.5) 0px, transparent 50%),
+    radial-gradient(at 4% 11%, rgba(255, 229, 236, 0.5) 0px, transparent 50%),
+    radial-gradient(at 80% 90%, rgba(199, 210, 254, 0.5) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.8) 0px, transparent 100%);
+
+  /* Removed heavy blur(80px) filter. Gradients are already soft. */
+  filter: saturate(140%);
+
+  opacity: 1;
+  animation: aurora-shift 60s infinite alternate ease-in-out;
+  /* Slower animation */
+  will-change: transform;
+  /* Hint to browser */
+  transform: translateZ(0);
+  /* Force GPU */
+}
+
+/* Subtle "grain" overlay for texture */
+.bg-aurora::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 @keyframes aurora-shift {
   0% {
-    transform: scale(1);
+    transform: scale(1) translate(0, 0);
+  }
+
+  33% {
+    transform: scale(1.1) translate(-2%, 2%);
+  }
+
+  66% {
+    transform: scale(0.95) translate(2%, -2%);
   }
 
   100% {
-    transform: scale(1.1);
+    transform: scale(1.05) translate(0, 0);
   }
 }
 
