@@ -11,7 +11,7 @@ const getGroq = () => {
     if (!apiKey) {
         throw new Error("Missing GROQ_API_KEY in .env.local");
     }
-    
+
     return new Groq({
         apiKey: apiKey,
     });
@@ -50,9 +50,9 @@ You MUST respond with ONLY a valid JSON object matching this exact schema:
 }`;
 
     try {
-        console.log("🚀 Starting validation with OpenRouter...");
+        console.log("🚀 Starting validation with Groq...");
         console.log("📋 Model:", MODEL_NAME);
-        
+
         const completion = await client.chat.completions.create({
             model: MODEL_NAME,
             messages: [
@@ -63,13 +63,13 @@ You MUST respond with ONLY a valid JSON object matching this exact schema:
             max_tokens: 2000,
         });
 
-        console.log("✅ Received response from OpenRouter");
+        console.log("✅ Received response from Groq");
         const response = completion.choices[0]?.message?.content || "";
         console.log("📝 Response preview:", response.substring(0, 100));
-        
+
         // Clean up markdown code blocks if present
         const cleanContent = response.replace(/```json\n?|\n?```/g, "").trim();
-        
+
         if (!cleanContent || cleanContent === "{}") {
             throw new Error("Received empty response from AI");
         }
@@ -78,7 +78,7 @@ You MUST respond with ONLY a valid JSON object matching this exact schema:
         console.log("✅ Successfully parsed JSON response");
         return parsed;
     } catch (error: any) {
-        console.error("❌ OpenRouter Validation Error:");
+        console.error("❌ Groq Validation Error:");
         console.error("Error message:", error.message);
         console.error("Error details:", error.response?.data || error);
         throw new Error(`Validation failed: ${error.message || "Unknown error"}`);
@@ -87,7 +87,7 @@ You MUST respond with ONLY a valid JSON object matching this exact schema:
 
 export async function pivotIdea(originalIdea: string): Promise<string> {
     const client = getGroq();
-    
+
     const systemPrompt = `You are a genius startup pivot machine.
 Your goal is to take a weak or common idea and "pivot" it into something 10x better, deeper, or more niche.
 
@@ -117,7 +117,7 @@ Rules:
 
 export async function generateRoadmap(idea: string): Promise<any[]> {
     const client = getGroq();
-    
+
     const systemPrompt = `You are an expert startup CTO and Project Manager.
 Create a strict 4-Week Execution Plan (Roadmap) for this idea.
 
@@ -142,7 +142,7 @@ You MUST respond with ONLY a valid JSON array in this exact format:
 
         const response = completion.choices[0]?.message?.content || "";
         const cleanContent = response.replace(/```json\n?|\n?```/g, "").trim();
-        
+
         return JSON.parse(cleanContent);
     } catch (error: any) {
         console.error("Roadmap Error:", error);
