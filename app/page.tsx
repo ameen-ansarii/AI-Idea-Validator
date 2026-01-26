@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowRight, AlertTriangle, TrendingUp, Target, ShieldAlert, Layers, Sparkles, AlertOctagon, DollarSign, Users, Download, RefreshCw, Map, Lock, Share2, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,7 +12,7 @@ import MaskedText from "./components/MaskedText";
 import AnalysisTerminal from "./components/AnalysisTerminal";
 import { generatePDF } from "./utils/generatePDF";
 
-export default function Home() {
+function HomeContent() {
   const [idea, setIdea] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<ValidationReport | null>(null);
@@ -332,11 +332,11 @@ export default function Home() {
                       AI PIVOT ENGINE
                     </h3>
                   </div>
-                  
+
                   <h2 className="text-5xl font-bold text-white leading-tight drop-shadow-lg">
                     {pivot ? "✨ Your Unicorn Pivot" : "💡 Not Satisfied?"}
                   </h2>
-                  
+
                   {pivot ? (
                     <p className="text-2xl text-white font-semibold leading-relaxed animate-in fade-in slide-in-from-bottom-2 bg-black/30 p-6 rounded-2xl border border-white/30 shadow-xl">
                       "{pivot}"
@@ -663,5 +663,13 @@ export default function Home() {
         )}
       </AnimatePresence>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }
