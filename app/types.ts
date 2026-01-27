@@ -18,3 +18,40 @@ export interface ValidationReport {
     whyItFails: string; // "Why this usually fails"
     whoShouldNotBuild: string; // "Who should NOT build this"
 }
+
+export interface CompetitiveAnalysis {
+    competitors: Array<{
+        name: string;
+        strengths: string[];
+        weaknesses: string[];
+        url?: string;
+    }>;
+    marketPosition: string;
+    differentiationStrategy: string;
+    competitiveAdvantages: string[];
+    threats: string[];
+}
+
+export interface MarketSize {
+    tam: string; // Total Addressable Market
+    sam: string; // Serviceable Addressable Market
+    som: string; // Serviceable Obtainable Market
+    tamJustification: string;
+    samJustification: string;
+    somJustification: string;
+    revenueProjection: {
+        year1: string;
+        year2: string;
+        year3: string;
+    };
+}
+
+export interface EnhancedRoadmap {
+    week: string;
+    title: string;
+    tasks: string[];
+    estimatedCost: string;
+    teamSize: number;
+    skillsRequired: string[];
+    keyMilestones: string[];
+}

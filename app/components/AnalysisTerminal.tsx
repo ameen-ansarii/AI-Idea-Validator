@@ -67,7 +67,7 @@ export default function AnalysisTerminal() {
                             transition={{ duration: 0.5 }}
                             className="text-center"
                         >
-                            <h2 className="text-2xl md:text-4xl font-bold text-black/80 mb-3 md:mb-4 tracking-tight">
+                            <h2 className="text-2xl md:text-3xl font-semibold text-white mb-3 md:mb-4 tracking-tight">
                                 {MESSAGES[currentMessage]}
                             </h2>
                         </motion.div>
@@ -80,7 +80,7 @@ export default function AnalysisTerminal() {
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.8 }}
-                                className="text-black/50 text-sm md:text-base italic"
+                                className="text-gray-500 text-sm md:text-base italic"
                             >
                                 {humorMessage}
                             </motion.p>
@@ -101,13 +101,13 @@ export default function AnalysisTerminal() {
                                     repeat: Infinity,
                                     delay: i * 0.2
                                 }}
-                                className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-black/80"
+                                className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-white"
                             />
                         ))}
                     </div>
 
                     {/* Subtle Text */}
-                    <p className="text-black/30 text-xs md:text-sm tracking-wider uppercase">
+                    <p className="text-gray-600 text-xs md:text-sm tracking-widest uppercase font-medium">
                         Powered by AI Intelligence
                     </p>
                 </div>

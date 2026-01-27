@@ -2,14 +2,18 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowRight, AlertTriangle, TrendingUp, Target, ShieldAlert, Layers, Sparkles, AlertOctagon, DollarSign, Users, Download, RefreshCw, Map, Lock, Share2, Check } from "lucide-react";
+import { ArrowRight, AlertTriangle, TrendingUp, Target, ShieldAlert, Layers, Sparkles, AlertOctagon, DollarSign, Users, Download, RefreshCw, Map, Lock, Share2, Check, BarChart3, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
-import { validateIdea, pivotIdea, generateRoadmap } from "./actions";
-import { ValidationReport } from "./types";
+import { validateIdea, pivotIdea, generateRoadmap, analyzeCompetitors, calculateMarketSize } from "./actions";
+import { ValidationReport, CompetitiveAnalysis as CompetitiveAnalysisType, MarketSize } from "./types";
 import Dock from "./components/Dock/Dock";
 import MaskedText from "./components/MaskedText";
 import AnalysisTerminal from "./components/AnalysisTerminal";
+import ExampleIdeas from "./components/ExampleIdeas";
+import CompetitiveAnalysis from "./components/CompetitiveAnalysis";
+import MarketSizeCalculator from "./components/MarketSizeCalculator";
+import OnboardingTutorial from "./components/OnboardingTutorial";
 import { generatePDF } from "./utils/generatePDF";
 
 function HomeContent() {
@@ -22,6 +26,10 @@ function HomeContent() {
   const [isGeneratingRoadmap, setIsGeneratingRoadmap] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [showRoadmapModal, setShowRoadmapModal] = useState(false);
+  const [competitiveAnalysis, setCompetitiveAnalysis] = useState<CompetitiveAnalysisType | null>(null);
+  const [isAnalyzingCompetitors, setIsAnalyzingCompetitors] = useState(false);
+  const [marketSize, setMarketSize] = useState<MarketSize | null>(null);
+  const [isCalculatingMarket, setIsCalculatingMarket] = useState(false);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -72,16 +80,30 @@ function HomeContent() {
 
   const handleShare = async () => {
     if (!report) return;
-    const text = `🚀 Idea Validator Report\n\n💡 Idea: ${idea}\n🏆 Verdict: ${report.verdict}\n⭐ Score: ${report.confidenceScore}/10\n\nCheck out IdeaValidator!`;
 
     try {
+      // 1. Create a compact object for sharing
+      const shareData = {
+        idea,
+        report,
+        timestamp: Date.now()
+      };
+
+      // 2. Encode to Base64 (simple compression)
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(shareData))));
+
+      // 3. Construct URL
+      const url = `${window.location.origin}/share?data=${encoded}`;
+
+      // 4. Share or Copy
       if (navigator.share) {
         await navigator.share({
           title: 'Idea Validator Report',
-          text: text,
+          text: `Check out this validation report for: ${idea.substring(0, 50)}...`,
+          url: url,
         });
       } else {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(url);
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
       }
@@ -95,7 +117,9 @@ function HomeContent() {
     setIsAnalyzing(true);
     setReport(null);
     setPivot(null);
-    setRoadmap(null); // Reset roadmap on new analysis
+    setRoadmap(null);
+    setCompetitiveAnalysis(null);
+    setMarketSize(null);
 
     try {
       // Minimum 7s wait for the "Theater" effect
@@ -143,6 +167,40 @@ function HomeContent() {
     }
   };
 
+  const handleAnalyzeCompetitors = async () => {
+    if (!idea) return;
+    setIsAnalyzingCompetitors(true);
+    try {
+      const analysis = await analyzeCompetitors(idea);
+      setCompetitiveAnalysis(analysis);
+    } catch (e) {
+      console.error(e);
+      alert("Could not analyze competitors. Please try again.");
+    } finally {
+      setIsAnalyzingCompetitors(false);
+    }
+  };
+
+  const handleCalculateMarketSize = async () => {
+    if (!idea) return;
+    setIsCalculatingMarket(true);
+    try {
+      const size = await calculateMarketSize(idea);
+      setMarketSize(size);
+    } catch (e) {
+      console.error(e);
+      alert("Could not calculate market size. Please try again.");
+    } finally {
+      setIsCalculatingMarket(false);
+    }
+  };
+
+  const handleSelectExampleIdea = (exampleIdea: string) => {
+    setIdea(exampleIdea);
+    // Auto-scroll to input
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <main className="min-h-screen flex flex-col items-center p-4 md:p-6 relative pt-20 md:pt-32 font-sans selection:bg-blue-500/30">
 
@@ -152,71 +210,84 @@ function HomeContent() {
 
       <div className="max-w-6xl w-full z-10 transition-all duration-700 ease-[0.16,1,0.3,1]">
 
-        {/* Header - Apple Style */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-          className="text-center mb-20 space-y-6"
-        >
+        {/* Header - Linear Style */}
+        {!report && !isAnalyzing && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/40 border border-white/60 backdrop-blur-md shadow-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-24 space-y-8 relative"
           >
-            <Sparkles className="w-4 h-4 text-blue-500" />
-            <span className="text-xs font-semibold tracking-wide uppercase text-black/60">Intelligence V2.0</span>
+            {/* Minimal Pill */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md mb-8 hover:bg-white/10 transition-colors cursor-default"
+            >
+              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400">
+                <Zap className="w-3 h-3 fill-indigo-400/50" />
+              </div>
+              <span className="text-xs font-semibold text-gray-200 tracking-wide uppercase">
+                Idea Intelligence <span className="text-gray-600 mx-1">//</span> v2.4
+              </span>
+            </motion.div>
+
+            <div className="relative z-10 space-y-6">
+              <h1 className="text-4xl sm:text-6xl md:text-8xl font-semibold tracking-tighter text-white leading-[1.1]">
+                <MaskedText text="Validate" delay={0.1} />
+                <span className="text-gray-500 ml-2 md:ml-4 block md:inline">Instantly</span>
+              </h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="text-base sm:text-xl text-gray-400 max-w-2xl mx-auto font-normal leading-relaxed px-4"
+              >
+                Data-driven feedback on your startup idea.{" "}
+                <span className="text-gray-200 block md:inline">No sugar coating. Just truth.</span>
+              </motion.p>
+            </div>
           </motion.div>
-
-          <h1 className="text-5xl sm:text-7xl md:text-9xl font-bold tracking-tighter text-black/90">
-            <MaskedText text="Validate." delay={0.1} />
-            <MaskedText text="Instantly." delay={0.3} className="text-black/30" />
-          </h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-            className="text-lg sm:text-xl md:text-3xl text-black/60 max-w-2xl mx-auto font-light leading-snug px-4"
-          >
-            Brutal, data-driven feedback for your startup idea.
-            <span className="text-black font-medium"> No fluff.</span>
-          </motion.p>
-        </motion.div>
+        )}
 
         {/* Input Section */}
         <AnimatePresence mode="wait">
           {!report && !isAnalyzing && (
             <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, filter: "blur(20px)" }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="max-w-4xl mx-auto"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, filter: "blur(10px)" }}
+              transition={{ duration: 0.5, ease: "circOut" }}
+              className="max-w-4xl mx-auto w-full"
             >
-              <div className="macos-card p-1 relative overflow-hidden group">
-                <div className="relative bg-white/40 rounded-[24px] p-6 md:p-8 lg:p-12">
+              <div className="macos-card p-1.5 rounded-2xl">
+                <div className="bg-[#050505] rounded-[10px] p-5 md:p-10 border border-white/5">
                   <textarea
                     value={idea}
                     onChange={(e) => setIdea(e.target.value)}
-                    placeholder="Describe your idea based on first principles..."
-                    className="w-full h-32 md:h-40 bg-transparent border-none text-lg sm:text-xl md:text-4xl text-black/90 placeholder-black/20 resize-none focus:ring-0 focus:outline-none font-medium leading-tight selection:bg-blue-200"
+                    placeholder="Describe your startup idea..."
+                    className="w-full h-32 md:h-40 bg-transparent border-none text-lg md:text-2xl text-white placeholder-gray-700 resize-none focus:ring-0 focus:outline-none font-medium leading-relaxed tracking-tight"
                   />
 
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-8 md:mt-12 pt-6 md:pt-8 border-t border-black/5">
-                    <div className="flex flex-wrap items-center gap-3 md:gap-6 text-xs md:text-sm font-medium text-black/40">
-                      <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-green-500" /> Live Analysis</span>
-                      <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Market Data</span>
+                  <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/5">
+                    <div className="hidden sm:flex items-center gap-4 text-xs font-medium text-gray-600">
+                      <span>Live Analysis</span>
+                      <span className="w-1 h-1 rounded-full bg-gray-800" />
+                      <span>Market Intelligence</span>
+                      <span className="w-1 h-1 rounded-full bg-gray-800" />
+                      <span>Competitor Scan</span>
                     </div>
 
                     <button
                       onClick={handleAnalyze}
                       disabled={!idea.trim()}
-                      className="liquid-button px-6 md:px-10 py-3 md:py-4 text-base md:text-lg flex items-center gap-2 md:gap-3 disabled:opacity-50 disabled:cursor-not-allowed group w-full sm:w-auto justify-center"
+                      className="liquid-button px-6 py-3 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
                     >
-                      Validate Idea
-                      <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
+                      <span>Validate Idea</span>
+                      <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -231,339 +302,371 @@ function HomeContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/60 backdrop-blur-xl"
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/50 backdrop-blur-md"
           >
             <AnalysisTerminal />
           </motion.div>
         )}
 
-        {/* Results - Bento Grid */}
+        {/* Results - Linear Grid */}
         {report && !isAnalyzing && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8 }}
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 grid-rows-[auto] gap-4 md:gap-6 pb-20 md:pb-32"
+            transition={{ duration: 0.6 }}
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 grid-rows-[auto] gap-4 pb-20 max-w-[1400px] mx-auto"
           >
             {/* Top Actions Header */}
             <motion.div
-              className="md:col-span-4 flex flex-col md:flex-row justify-between items-center gap-4 mb-2"
+              className="md:col-span-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 mt-8 border-b border-white/10 pb-6"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div className="flex flex-col items-start w-full md:w-auto">
-                <h2 className="text-2xl md:text-3xl font-bold text-black/80 tracking-tight">Analysis Report</h2>
-                <p className="text-black/40 text-xs md:text-sm">Generated by AI Validator</p>
+              <div>
+                <h2 className="text-3xl font-semibold text-white tracking-tight">Analysis Report</h2>
+                <p className="text-gray-500 text-sm mt-1">Generated {new Date().toLocaleDateString()}</p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto justify-start md:justify-end">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={handleShare}
-                  className="px-4 md:px-6 py-2 md:py-2.5 rounded-full bg-white text-black hover:bg-gray-50 transition-all font-medium flex items-center gap-2 shadow-sm hover:shadow-md border border-black/5 active:scale-95 text-xs md:text-sm flex-1 sm:flex-none justify-center"
+                  className="liquid-button secondary px-4 py-2 text-sm flex items-center gap-2"
                 >
-                  {isCopied ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4 text-blue-500" />}
+                  {isCopied ? <Check className="w-3 h-3 text-green-400" /> : <Share2 className="w-3 h-3" />}
                   {isCopied ? "Copied" : "Share"}
                 </button>
 
                 <button
                   onClick={() => generatePDF(report, idea)}
-                  className="px-6 py-2.5 rounded-full bg-black text-white hover:bg-black/80 transition-all font-medium flex items-center gap-2 shadow-lg hover:shadow-xl active:scale-95 text-sm"
+                  className="liquid-button secondary px-4 py-2 text-sm flex items-center gap-2"
                 >
-                  <Download className="w-4 h-4" />
-                  Download PDF
+                  <Download className="w-3 h-3" />
+                  PDF
                 </button>
 
                 <button
                   onClick={() => setReport(null)}
-                  className="px-6 py-2.5 rounded-full bg-white text-black hover:bg-gray-50 transition-all font-medium flex items-center gap-2 shadow-sm hover:shadow-md border border-black/5 active:scale-95 text-sm"
+                  className="liquid-button px-4 py-2 text-sm flex items-center gap-2"
                 >
-                  <Sparkles className="w-4 h-4 text-purple-500" />
-                  New Idea
+                  <Sparkles className="w-3 h-3" />
+                  New Analysis
                 </button>
               </div>
             </motion.div>
 
-            {/* 1. Verdict (Large Square) */}
+            {/* 1. Verdict (Large) */}
             <motion.div
-              className={clsx(
-                "md:col-span-2 md:row-span-2 macos-card p-10 flex flex-col justify-between relative overflow-hidden group",
-                report.verdict === "Build Now" ? "shadow-[0_20px_40px_-10px_rgba(16,185,129,0.1)]" :
-                  report.verdict === "Build with Caution" ? "shadow-[0_20px_40px_-10px_rgba(245,158,11,0.1)]" :
-                    "shadow-[0_20px_40px_-10px_rgba(239,68,68,0.1)]"
-              )}
-              initial={{ scale: 0.95, opacity: 0 }}
+              className="md:col-span-2 md:row-span-2 macos-card p-8 flex flex-col justify-between"
+              initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1 }}
             >
-              <div className={clsx(
-                "absolute top-0 right-0 w-64 h-64 blur-[80px] opacity-20 rounded-full -mr-20 -mt-20",
-                report.verdict === "Build Now" ? "bg-green-500" :
-                  report.verdict === "Build with Caution" ? "bg-yellow-500" : "bg-red-500"
-              )} />
-
               <div>
-                <h3 className="text-xs md:text-sm font-bold uppercase tracking-widest text-black/40 mb-2">Final Verdict</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Verdict</h3>
                 <h2 className={clsx(
-                  "text-4xl sm:text-5xl md:text-6xl font-bold tracking-tighter leading-none",
-                  report.verdict === "Build Now" ? "text-green-600" :
-                    report.verdict === "Build with Caution" ? "text-yellow-600" : "text-red-600"
+                  "text-5xl font-semibold tracking-tighter",
+                  report.verdict === "Build Now" ? "text-white" :
+                    report.verdict === "Build with Caution" ? "text-gray-200" : "text-gray-400"
                 )}>
                   {report.verdict}
                 </h2>
+                <div className={clsx("h-1 w-20 mt-4 rounded-full",
+                  report.verdict === "Build Now" ? "bg-green-500" :
+                    report.verdict === "Build with Caution" ? "bg-yellow-500" : "bg-red-500"
+                )} />
               </div>
-              <p className="text-xl text-black/70 font-medium leading-relaxed mt-8 relative z-10">
-                "{report.verdictJustification}"
+              <p className="text-lg text-gray-400 leading-relaxed mt-6">
+                {report.verdictJustification}
               </p>
             </motion.div>
 
-            {/* 2. Pivot Generator - High Contrast Design */}
+            {/* 2. Viability Score (was Confidence) */}
             <motion.div
-              className="md:col-span-2 md:row-span-2 macos-card p-1 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 relative overflow-hidden group shadow-2xl"
-              initial={{ scale: 0.95, opacity: 0 }}
+              className="md:col-span-1 md:row-span-1 macos-card p-6 flex flex-col justify-between"
+              initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <div className="absolute inset-0 bg-black/40" />
-              <div className="bg-gradient-to-br from-black/50 to-black/30 backdrop-blur-xl h-full w-full p-10 flex flex-col justify-between relative z-10">
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <Sparkles className="w-6 h-6 text-white" />
-                    <h3 className="text-sm font-bold text-white uppercase tracking-widest">
-                      AI PIVOT ENGINE
-                    </h3>
-                  </div>
-
-                  <h2 className="text-5xl font-bold text-white leading-tight drop-shadow-lg">
-                    {pivot ? "✨ Your Unicorn Pivot" : "💡 Not Satisfied?"}
-                  </h2>
-
-                  {pivot ? (
-                    <p className="text-2xl text-white font-semibold leading-relaxed animate-in fade-in slide-in-from-bottom-2 bg-black/30 p-6 rounded-2xl border border-white/30 shadow-xl">
-                      "{pivot}"
-                    </p>
-                  ) : (
-                    <p className="text-white text-xl leading-relaxed font-medium">
-                      Transform your idea into something 10x better. Get deeper insights, new angles, and viable alternatives instantly.
-                    </p>
-                  )}
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Viability Score</h3>
+                  <p className="text-[10px] text-gray-600 font-medium">Likelihood of success</p>
                 </div>
-
-                <button
-                  onClick={handlePivot}
-                  disabled={isPivoting}
-                  className="mt-6 w-full py-5 rounded-2xl bg-white text-black hover:bg-gray-100 text-xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50 shadow-2xl"
-                >
-                  <RefreshCw className={clsx("w-6 h-6", isPivoting && "animate-spin")} />
-                  {isPivoting ? "Generating Pivot..." : pivot ? "Generate Another" : "Generate Pivot"}
-                </button>
+                <span className="text-2xl font-bold text-white">
+                  {report.confidenceScore === 'High' ? '92' : report.confidenceScore === 'Medium' ? '65' : '30'}%
+                </span>
+              </div>
+              <div className="w-full bg-white/5 h-1 md:h-2 rounded-full mt-4 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: report.confidenceScore === 'High' ? '92%' : report.confidenceScore === 'Medium' ? '65%' : '30%' }}
+                  className="h-full bg-white"
+                />
               </div>
             </motion.div>
 
-            {/* 2. Confidence (Small Square) */}
+            {/* 3. Problem Urgency (was Pain Level) */}
             <motion.div
-              className="md:col-span-1 md:row-span-1 macos-card p-6 flex flex-col items-center justify-center relative"
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="relative w-32 h-32 flex items-center justify-center mb-4">
-                <svg className="w-full h-full transform -rotate-90">
-                  <circle cx="64" cy="64" r="56" className="stroke-black/5" strokeWidth="8" fill="none" />
-                  <motion.circle
-                    cx="64" cy="64" r="56"
-                    className={clsx(
-                      "stroke-current",
-                      report.confidenceScore === 'High' ? 'text-green-500' :
-                        report.confidenceScore === 'Medium' ? 'text-yellow-500' : 'text-red-500'
-                    )}
-                    strokeWidth="8"
-                    fill="none"
-                    strokeDasharray="351"
-                    strokeDashoffset="351"
-                    animate={{ strokeDashoffset: report.confidenceScore === 'High' ? 35 : report.confidenceScore === 'Medium' ? 175 : 280 }}
-                    transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute flex flex-col items-center">
-                  <span className="text-3xl font-bold text-black/80">
-                    {report.confidenceScore === 'High' ? '92' : report.confidenceScore === 'Medium' ? '65' : '30'}%
-                  </span>
-                </div>
-              </div>
-              <h3 className="text-sm font-semibold text-black/50">AI Confidence</h3>
-            </motion.div>
-
-            {/* 3. Pain Level (Small Square) */}
-            <motion.div
-              className="md:col-span-1 md:row-span-1 macos-card p-8 flex flex-col justify-between"
-              initial={{ scale: 0.95, opacity: 0 }}
+              className="md:col-span-1 md:row-span-1 macos-card p-6 flex flex-col justify-between"
+              initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              <AlertTriangle className="w-8 h-8 text-orange-500 mb-4" />
-              <div>
-                <h3 className="text-4xl font-bold text-black/80 mb-1">{report.problemSeverity}/10</h3>
-                <div className="w-full h-2 bg-black/5 rounded-full mt-2 overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${report.problemSeverity * 10}%` }}
-                    transition={{ duration: 1, delay: 0.5 }}
-                    className={clsx("h-full rounded-full", report.problemSeverity > 7 ? "bg-red-500" : report.problemSeverity > 4 ? "bg-orange-500" : "bg-blue-500")}
-                  />
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Problem Urgency</h3>
+                  <p className="text-[10px] text-gray-600 font-medium">Do users *need* this?</p>
                 </div>
-                <p className="text-sm font-medium text-black/40 mt-2">Pain Severity</p>
+                <span className="text-2xl font-bold text-white">{report.problemSeverity}/10</span>
+              </div>
+              <div className="flex gap-1 mt-4">
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className={clsx("h-2 flex-1 rounded-sm", i < report.problemSeverity ? "bg-white" : "bg-white/10")} />
+                ))}
               </div>
             </motion.div>
 
-            {/* 4. Kill Switch (Wide Rectangle) */}
+            {/* 4. Main Challenge (was Failure Risk) */}
             <motion.div
-              className="md:col-span-2 macos-card p-8 flex flex-col justify-center bg-red-50/50 relative overflow-hidden"
-              initial={{ scale: 0.95, opacity: 0 }}
+              className="md:col-span-2 macos-card p-8 bg-[#1a1212] border-white/10"
+              initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              <div className="absolute top-0 right-0 p-20 bg-red-500/5 blur-3xl -mr-10 -mt-10" />
-              <h3 className="flex items-center gap-2 text-red-500 font-bold uppercase tracking-widest text-xs mb-4">
-                <ShieldAlert className="w-4 h-4" /> Why It Fails
+              <h3 className="flex items-center gap-2 text-red-400/80 font-semibold uppercase tracking-wider text-xs mb-4">
+                <ShieldAlert className="w-3 h-3" /> Biggest Challenge
               </h3>
-              <p className="text-xl text-black/80 font-medium leading-relaxed">
-                "{report.whyItFails}"
-              </p>
-              <p className="mt-4 text-sm text-black/50 border-l-2 border-red-500/20 pl-4 py-1">
-                ⛔ Not for: {report.whoShouldNotBuild}
+              <p className="text-lg text-gray-300">
+                {report.whyItFails}
               </p>
             </motion.div>
 
-            {/* 5. Summary (Tall Rectangle) */}
+            {/* 5. Summary */}
             <motion.div
-              className="md:col-span-2 md:row-span-2 macos-card p-8 flex flex-col gap-6"
-              initial={{ scale: 0.95, opacity: 0 }}
+              className="md:col-span-2 md:row-span-2 macos-card p-8"
+              initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
-              <h3 className="text-sm font-bold uppercase tracking-widest text-black/40 flex items-center gap-2">
-                <Layers className="w-4 h-4" /> Executive Summary
-              </h3>
-              <p className="text-lg text-black/70 leading-relaxed">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-6">Executive Summary</h3>
+              <p className="text-gray-300 leading-7 mb-8">
                 {report.summary}
               </p>
 
-              <div className="p-6 bg-white/40 rounded-2xl border border-white/40 shadow-sm">
-                <h4 className="text-xs text-black/40 uppercase font-bold mb-3">Target Users</h4>
-                <p className="text-black/80">{report.targetUsers}</p>
+              <div className="border-t border-white/5 pt-6">
+                <h4 className="text-xs text-gray-500 uppercase font-semibold mb-2">Target Audience</h4>
+                <p className="text-white">{report.targetUsers}</p>
               </div>
             </motion.div>
 
-            {/* 6. Market Demand (Small) */}
+            {/* 6. Demand Strength (was Market Demand) */}
             <motion.div
-              className="macos-card p-8 flex flex-col justify-center"
-              initial={{ scale: 0.95, opacity: 0 }}
+              className="macos-card p-6 flex flex-col justify-between"
+              initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.6 }}
             >
-              <TrendingUp className="w-8 h-8 text-blue-500 mb-auto" />
               <div>
-                <div className="flex items-end gap-1 h-8 mb-2">
-                  {['Low', 'Medium', 'High'].map((level, i) => {
-                    const targetIndex = ['Low', 'Medium', 'High'].indexOf(report.marketDemand);
-                    return (
-                      <motion.div
-                        key={level}
-                        initial={{ height: '20%', opacity: 0.3 }}
-                        animate={{ height: i <= targetIndex ? '100%' : '20%', opacity: i <= targetIndex ? 1 : 0.3 }}
-                        transition={{ delay: 0.6 + (i * 0.1) }}
-                        className={clsx("w-3 rounded-sm", i === 0 ? "bg-red-400" : i === 1 ? "bg-yellow-400" : "bg-green-400")}
-                      />
-                    )
-                  })}
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Demand Strength</h3>
+                <p className="text-[10px] text-gray-600 font-medium">Are people searching?</p>
+              </div>
+              <div className="mt-4">
+                <h3 className="text-xl font-bold text-white mb-1">{report.marketDemand}</h3>
+                <div className="flex gap-1 mt-2">
+                  <div className={clsx("h-1 w-8 rounded-full", "bg-white")} />
+                  <div className={clsx("h-1 w-8 rounded-full", ["Medium", "High"].includes(report.marketDemand) ? "bg-white" : "bg-white/10")} />
+                  <div className={clsx("h-1 w-8 rounded-full", report.marketDemand === "High" ? "bg-white" : "bg-white/10")} />
                 </div>
-                <h3 className="text-2xl font-bold text-black/80 mb-1">{report.marketDemand}</h3>
-                <p className="text-sm font-medium text-black/40">Demand</p>
               </div>
             </motion.div>
 
-            {/* 7. Roadmap Launch Button */}
+            {/* 7. Roadmap Button */}
             <motion.div
-              className="macos-card p-8 flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-transform"
-              initial={{ scale: 0.95, opacity: 0 }}
+              className="macos-card p-6 flex flex-col justify-center items-center text-center cursor-pointer hover:bg-white/5 transition-colors group"
+              initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.7 }}
               onClick={roadmap ? () => setShowRoadmapModal(true) : handleGenerateRoadmap}
             >
-              <Map className="w-12 h-12 text-purple-600 mb-4" />
-              <h3 className="text-2xl font-bold text-black/80 mb-2 text-center">
-                {roadmap ? "View Roadmap" : "Generate Roadmap"}
-              </h3>
-              <p className="text-sm text-black/50 text-center mb-4">
-                {roadmap ? "4-week execution plan ready" : "Get your 4-week launch plan"}
-              </p>
-              {isGeneratingRoadmap && (
-                <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
-              )}
+              <Map className="w-8 h-8 text-gray-400 group-hover:text-white transition-colors mb-2" />
+              <span className="font-medium text-white">{roadmap ? "View Roadmap" : "Create Roadmap"}</span>
+              {isGeneratingRoadmap && <div className="mt-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
             </motion.div>
 
-            {/* 8. Risks (Wide Rectangle - Fills the gap next to Summary) */}
+            {/* 8. Risks */}
             <motion.div
-              className="md:col-span-2 macos-card p-8 flex flex-col justify-between bg-orange-50/50"
-              initial={{ scale: 0.95, opacity: 0 }}
+              className="md:col-span-2 macos-card p-8"
+              initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.8 }}
             >
-              <div>
-                <h3 className="flex items-center gap-2 text-orange-600 font-bold uppercase tracking-widest text-xs mb-4">
-                  <AlertOctagon className="w-4 h-4" /> Venture Risks
-                </h3>
-                <p className="text-lg text-black/80 font-medium leading-relaxed">
-                  "{report.risks}"
-                </p>
-              </div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-4">Potential Risks</h3>
+              <p className="text-gray-300">
+                {report.risks}
+              </p>
             </motion.div>
 
-            {/* 9. Monetization (Wide) */}
+            {/* 9. Monetization */}
             <motion.div
               className="md:col-span-2 macos-card p-8"
-              initial={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.9 }}
             >
-              <h3 className="flex items-center gap-2 text-green-600 font-bold uppercase tracking-widest text-xs mb-6">
-                <DollarSign className="w-4 h-4" /> Monetization Models
-              </h3>
-              <div className="flex flex-wrap gap-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-green-500/80 mb-4">Monetization</h3>
+              <div className="flex flex-wrap gap-2">
                 {report.monetizationPaths?.map((path, i) => (
-                  <span key={i} className="px-4 py-2 bg-white/60 border border-green-200/50 rounded-lg text-sm font-medium text-black/70 shadow-sm">
+                  <span key={i} className="px-3 py-1.5 border border-white/10 rounded-md text-sm text-gray-300">
                     {path}
                   </span>
                 ))}
               </div>
             </motion.div>
 
-            {/* 10. Competitors (Wide) */}
+            {/* 10. Competitors */}
             <motion.div
               className="md:col-span-2 macos-card p-8"
-              initial={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 1.0 }}
             >
-              <h3 className="flex items-center gap-2 text-blue-600 font-bold uppercase tracking-widest text-xs mb-6">
-                <Users className="w-4 h-4" /> Known Competitors
-              </h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-blue-500/80 mb-4">Competitors</h3>
               <div className="flex flex-wrap gap-3">
                 {report.alternatives?.map((alt, i) => (
-                  <span key={i} className="px-4 py-2 bg-white/60 border border-blue-200/50 rounded-lg text-sm font-medium text-black/70 shadow-sm flex items-center gap-2">
-                    <img src={`https://www.google.com/s2/favicons?domain=${alt.replace(/\s+/g, '').toLowerCase()}.com&sz=128`} alt="" className="w-4 h-4 opacity-50" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                    {alt}
-                  </span>
+                  <div key={i} className="pl-1.5 pr-3 py-1.5 border border-white/10 rounded-full text-sm text-gray-300 flex items-center gap-2 bg-white/5 hover:bg-white/10 transition-colors cursor-default">
+                    <img
+                      src={`https://www.google.com/s2/favicons?domain=${alt.toLowerCase().replace(/\s+/g, '')}.com&sz=64`}
+                      alt={alt}
+                      className="w-5 h-5 rounded-full opacity-90"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                    <span>{alt}</span>
+                  </div>
                 ))}
               </div>
+            </motion.div>
+
+            {/* New Analysis Sections - refined to Linear style */}
+            <motion.div
+              className="md:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.1 }}
+            >
+              <button
+                onClick={handleAnalyzeCompetitors}
+                disabled={isAnalyzingCompetitors}
+                className="macos-card p-6 flex items-center justify-between hover:bg-white/5 transition-all disabled:opacity-50 group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-white/20 transition-colors">
+                    <Target className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-semibold text-white">Competitive Analysis</h4>
+                    <p className="text-sm text-gray-500">Analyze market positioning</p>
+                  </div>
+                </div>
+                {isAnalyzingCompetitors ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors" />
+                )}
+              </button>
+
+              <button
+                onClick={handleCalculateMarketSize}
+                disabled={isCalculatingMarket}
+                className="macos-card p-6 flex items-center justify-between hover:bg-white/5 transition-all disabled:opacity-50 group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-white/20 transition-colors">
+                    <BarChart3 className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-semibold text-white">Market Size Calculator</h4>
+                    <p className="text-sm text-gray-500">TAM, SAM, SOM analysis</p>
+                  </div>
+                </div>
+                {isCalculatingMarket ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors" />
+                )}
+              </button>
+            </motion.div>
+
+            {/* AI Pivot Generator - Linear Style */}
+            <motion.div
+              className="md:col-span-4 macos-card p-8 mt-6 relative overflow-hidden group"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 1.2 }}
+            >
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-400 uppercase tracking-widest">
+                      AI Pivot Engine
+                    </span>
+                  </div>
+
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    {pivot ? "Your Pivot Strategy" : "Need a better angle?"}
+                  </h2>
+
+                  {!pivot && (
+                    <p className="text-gray-400 text-sm max-w-lg">
+                      Generate a stronger, more viable direction for your startup idea instantly.
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex-shrink-0">
+                  <button
+                    onClick={handlePivot}
+                    disabled={isPivoting}
+                    className="px-6 py-3 rounded-lg bg-white text-black font-semibold text-sm hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm flex items-center gap-2"
+                  >
+                    <RefreshCw className={clsx("w-4 h-4", isPivoting && "animate-spin")} />
+                    {isPivoting ? "Generating..." : pivot ? "Regenerate" : "Generate Pivot"}
+                  </button>
+                </div>
+              </div>
+
+              {pivot && (
+                <div className="mt-6 p-6 rounded-xl border border-white/10 bg-white/5">
+                  <p className="text-lg text-gray-200 leading-relaxed font-medium">
+                    "{pivot}"
+                  </p>
+                </div>
+              )}
             </motion.div>
 
 
 
 
-
           </motion.div>
+        )}
+
+        {/* Competitive Analysis Section */}
+        {competitiveAnalysis && (
+          <CompetitiveAnalysis data={competitiveAnalysis} />
+        )}
+
+        {/* Market Size Section */}
+        {marketSize && (
+          <MarketSizeCalculator data={marketSize} />
+        )}
+
+        {/* Example Ideas Section - Show when no report */}
+        {!report && !isAnalyzing && (
+          <ExampleIdeas onSelectIdea={handleSelectExampleIdea} />
         )}
       </div>
 
@@ -574,7 +677,7 @@ function HomeContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xl p-6"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-6"
             onClick={() => setShowRoadmapModal(false)}
           >
             <motion.div
@@ -582,22 +685,24 @@ function HomeContent() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 25 }}
-              className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden"
+              className="bg-black/40 border border-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-blue-600 p-8 text-white">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <Map className="w-10 h-10" />
+              {/* Header - Linear Style */}
+              <div className="sticky top-0 bg-[#0a0a0a]/95 backdrop-blur-md p-4 md:p-8 border-b border-white/10 z-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                      <Map className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                    </div>
                     <div>
-                      <h2 className="text-4xl font-bold tracking-tight">Your 4-Week Roadmap</h2>
-                      <p className="text-white/80 text-lg mt-1">From idea to launch</p>
+                      <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">Execution Roadmap</h2>
+                      <p className="text-xs md:text-sm text-gray-500">From concept to MVP in 4 weeks</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setShowRoadmapModal(false)}
-                    className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all text-2xl font-bold"
+                    className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors text-gray-400 hover:text-white"
                   >
                     ×
                   </button>
@@ -605,55 +710,87 @@ function HomeContent() {
               </div>
 
               {/* Content */}
-              <div className="p-8 overflow-y-auto max-h-[calc(90vh-180px)]">
-                <div className="space-y-12">
+              <div className="p-8 overflow-y-auto max-h-[calc(90vh-100px)]">
+                <div className="space-y-0">
                   {roadmap.map((week, i) => (
                     <motion.div
                       key={i}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.1 }}
-                      className="relative"
+                      className="relative pl-8 md:pl-0"
                     >
+                      {/* Connector Line (Desktop) */}
+                      {i < roadmap.length - 1 && (
+                        <div className="hidden md:block absolute left-1/2 top-full bottom-0 w-px bg-white/10 h-10 -ml-px z-0 transformed -translate-y-4" />
+                      )}
+
                       {/* Week Card */}
-                      <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 border border-gray-100 shadow-lg">
-                        {/* Week Badge */}
-                        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-full mb-6 shadow-md">
-                          <span className="text-2xl font-bold">{week.week}</span>
+                      <div className="mb-10 relative">
+                        <div className="flex flex-col md:items-center gap-6 mb-6">
+                          <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-sm font-medium text-gray-300 font-mono">
+                            {week.week}
+                          </span>
+                          <h3 className="text-3xl md:text-4xl font-bold text-white text-center tracking-tight">
+                            {week.title}
+                          </h3>
                         </div>
 
-                        {/* Week Title */}
-                        <h3 className="text-3xl font-bold text-black/90 mb-6">
-                          {week.title}
-                        </h3>
-
-                        {/* Tasks */}
-                        <div className="space-y-4">
-                          {week.tasks.map((task: string, j: number) => (
-                            <motion.div
-                              key={j}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: i * 0.1 + j * 0.05 }}
-                              className="flex items-start gap-4 bg-white p-4 rounded-xl border border-gray-100 hover:border-purple-200 hover:shadow-md transition-all group"
-                            >
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 group-hover:scale-110 transition-transform">
-                                {j + 1}
+                        <div className="bg-[#0f0f0f] rounded-xl border border-white/10 p-6 md:p-8 relative z-10">
+                          {/* Tasks */}
+                          <div className="space-y-3 mb-8">
+                            {week.tasks.map((task: string, j: number) => (
+                              <div key={j} className="flex items-start gap-3 group">
+                                <div className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:border-white transition-colors">
+                                  <div className="w-2.5 h-2.5 rounded-full bg-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                                <p className="text-gray-400 group-hover:text-gray-200 transition-colors leading-relaxed">
+                                  {task}
+                                </p>
                               </div>
-                              <p className="text-lg text-black/80 leading-relaxed flex-1">
-                                {task}
+                            ))}
+                          </div>
+
+                          {/* Metrics Grid */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-white/5">
+                            <div className="p-4 rounded-lg bg-white/5 border border-white/5">
+                              <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1">Estimated Cost</p>
+                              <p className="text-lg font-medium text-white font-mono">{week.estimatedCost}</p>
+                            </div>
+                            <div className="p-4 rounded-lg bg-white/5 border border-white/5">
+                              <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1">Team Size</p>
+                              <p className="text-lg font-medium text-white">{week.teamSize} members</p>
+                            </div>
+                            <div className="p-4 rounded-lg bg-white/5 border border-white/5">
+                              <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-2">Skills Needed</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {week.skillsRequired?.map((skill: string, k: number) => (
+                                  <span key={k} className="text-xs px-2 py-0.5 bg-white/10 text-gray-300 rounded border border-white/5">
+                                    {skill}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Milestones */}
+                          {week.keyMilestones && week.keyMilestones.length > 0 && (
+                            <div className="mt-4 p-4 rounded-lg border border-dashed border-white/10 bg-black/20">
+                              <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-3 flex items-center gap-2">
+                                <Check className="w-3 h-3" /> Key Deliverables
                               </p>
-                            </motion.div>
-                          ))}
+                              <ul className="space-y-2">
+                                {week.keyMilestones.map((milestone: string, m: number) => (
+                                  <li key={m} className="text-sm text-gray-400 flex items-center gap-2">
+                                    <span className="w-1 h-1 rounded-full bg-green-500/50" />
+                                    {milestone}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
                       </div>
-
-                      {/* Connector Line */}
-                      {i < roadmap.length - 1 && (
-                        <div className="flex justify-center my-8">
-                          <div className="w-1 h-12 bg-gradient-to-b from-purple-300 to-blue-300 rounded-full" />
-                        </div>
-                      )}
                     </motion.div>
                   ))}
                 </div>
@@ -662,6 +799,9 @@ function HomeContent() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Onboarding Tutorial */}
+      <OnboardingTutorial />
     </main>
   );
 }

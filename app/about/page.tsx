@@ -32,16 +32,16 @@ export default function AboutPage() {
 
             <div className="max-w-4xl w-full z-10">
                 <div className="text-center mb-16 space-y-6">
-                    <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-black/90">
+                    <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-white">
                         <MaskedText text="About the" delay={0.1} />
-                        <MaskedText text="Validator." delay={0.3} className="text-black/40" />
+                        <MaskedText text="Validator." delay={0.3} className="text-gray-500" />
                     </h1>
 
                     <motion.p
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5 }}
-                        className="text-xl text-black/60 max-w-2xl mx-auto leading-relaxed"
+                        className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed"
                     >
                         We built this tool to help builders stop wasting time on ideas that won't work, so they can focus on the ones that will.
                     </motion.p>

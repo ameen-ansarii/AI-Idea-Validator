@@ -3,38 +3,31 @@
 @tailwind utilities;
 
 :root {
-  /* macOS Light Mode Palette */
-  --background: #fbfbfd;
-  --foreground: #1d1d1f;
-  /* SF Pro Black */
+  /* Linear / Cluely Palette */
+  --background: #000000;
+  --foreground: #ffffff;
 
-  /* Liquid Glass (Frosted) */
-  --macos-glass: rgba(255, 255, 255, 0.65);
-  --macos-glass-border: rgba(255, 255, 255, 0.6);
-  --macos-glass-highlight: rgba(255, 255, 255, 0.6);
+  --card-bg: #0a0a0a;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-highlight: rgba(255, 255, 255, 0.05);
 
-  /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 12px 24px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 24px 48px -12px rgba(0, 0, 0, 0.12);
-}
-
-@font-face {
-  font-family: 'SF Pro Display';
-  src: local('SF Pro Display'), local('San Francisco Display'), url('https://rsms.me/inter/inter.css');
+  --text-secondary: #a1a1aa;
+  /* Zinc 400 */
+  --primary-accent: #5e6ad2;
+  /* Subtle Indigo */
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* --- Moving Aurora Background --- */
-/* --- Moving Aurora Background (Optimized) --- */
+/* --- Ambient Lighting (Subtle) --- */
 .bg-aurora {
   position: fixed;
   top: 0;
@@ -42,357 +35,147 @@ body {
   width: 100vw;
   height: 100vh;
   z-index: -1;
-  background-color: #ffffff;
-  /* Use naturally soft gradients instead of heavy blur filters */
   background:
-    radial-gradient(at 18% 99%, rgba(206, 222, 255, 0.5) 0px, transparent 50%),
-    radial-gradient(at 93% 13%, rgba(230, 209, 255, 0.5) 0px, transparent 50%),
-    radial-gradient(at 4% 11%, rgba(255, 229, 236, 0.5) 0px, transparent 50%),
-    radial-gradient(at 80% 90%, rgba(199, 210, 254, 0.5) 0px, transparent 50%),
-    radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.8) 0px, transparent 100%);
-
-  /* Removed heavy blur(80px) filter. Gradients are already soft. */
-  filter: saturate(140%);
-
-  opacity: 1;
-  animation: aurora-shift 60s infinite alternate ease-in-out;
-  /* Slower animation */
-  will-change: transform;
-  /* Hint to browser */
-  transform: translateZ(0);
-  /* Force GPU */
-}
-
-/* Subtle "grain" overlay for texture */
-.bg-aurora::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
-  opacity: 0.6;
+    radial-gradient(circle at 50% 0%, rgba(120, 119, 198, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.03) 0%, transparent 20%);
   pointer-events: none;
 }
 
-@keyframes aurora-shift {
-  0% {
-    transform: scale(1) translate(0, 0);
-  }
-
-  33% {
-    transform: scale(1.1) translate(-2%, 2%);
-  }
-
-  66% {
-    transform: scale(0.95) translate(2%, -2%);
-  }
-
-  100% {
-    transform: scale(1.05) translate(0, 0);
-  }
-}
-
-/* --- macOS Dock / Card Styles --- */
+/* --- Linear Style Card --- */
 .macos-card {
-  background: var(--macos-glass);
-  backdrop-filter: blur(25px) saturate(180%);
-  -webkit-backdrop-filter: blur(25px) saturate(180%);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-top: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 24px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  /* Tighter radius */
   box-shadow:
-    0 10px 40px -10px rgba(0, 0, 0, 0.05),
-    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
-  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.4s ease;
+    0 0 0 1px rgba(0, 0, 0, 1),
+    /* Black edge */
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  /* Top Highlight */
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .macos-card:hover {
-  box-shadow:
-    0 20px 50px -12px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
 }
 
-/* --- Liquid Button --- */
+/* --- Clean Modern Button --- */
 .liquid-button {
-  background: #0071e3;
-  /* classic apple blue */
-  color: #ffffff;
-  border-radius: 9999px;
+  background: #ffffff;
+  color: #000000;
+  border-radius: 8px;
+  /* Slightly squared */
   font-weight: 500;
-  letter-spacing: -0.01em;
-  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+  font-size: 0.95rem;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  /* Subtle inner ring */
+  cursor: pointer;
   position: relative;
   overflow: hidden;
-  cursor: pointer;
-}
-
-.liquid-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
 }
 
 .liquid-button:hover {
-  transform: scale(1.02);
-  box-shadow: 0 6px 20px rgba(0, 113, 227, 0.4);
-}
-
-.liquid-button:hover::before {
-  opacity: 1;
+  background: #f0f0f0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
 }
 
 .liquid-button:active {
-  transform: scale(0.98);
+  transform: translateY(0);
+  background: #e5e5e5;
 }
 
-/* --- Input Field --- */
+/* Secondary Button Variant */
+.liquid-button.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.liquid-button.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+
+/* --- Inputs --- */
 .macos-input {
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 16px;
-  color: #1d1d1f;
-  transition: all 0.3s ease;
+  background: #0e0e0e;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: white;
+  padding: 0.75rem 1rem;
+  outline: none;
+  transition: all 0.15s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .macos-input:focus {
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
-  outline: none;
-  border-color: #0071e3;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: #121212;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
-/* --- Text Reveal Mask --- */
-.masked-text-container {
-  overflow: hidden;
+/* --- Typography Utilities --- */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.02em;
+  /* Tight tracking for headings */
+  font-weight: 600;
 }
 
-.masked-word {
-  display: inline-block;
-  transform: translateY(100%);
-  animation: reveal-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+p {
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
-@keyframes reveal-up {
-  to {
-    transform: translateY(0);
-  }
+.text-gradient {
+  background: linear-gradient(to bottom right, #ffffff, #a1a1aa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* --- Siri Orb (Loader) --- */
-.siri-container {
-  width: 80px;
-  height: 80px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-}
-
-.siri-orb {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(0, 113, 227, 0.5));
-  box-shadow:
-    0 0 20px rgba(0, 113, 227, 0.4),
-    0 0 40px rgba(0, 113, 227, 0.2),
-    inset 0 0 10px rgba(255, 255, 255, 0.5);
-  animation: orb-pulse 2s infinite ease-in-out;
-}
-
-@keyframes orb-pulse {
-
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-
-  50% {
-    transform: scale(1.2);
-    opacity: 1;
-    box-shadow: 0 0 30px rgba(0, 113, 227, 0.6), 0 0 60px rgba(0, 113, 227, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.8);
-  }
-}
-
-/* Scrollbar */
+/* --- Scrollbar --- */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
+  background: #333;
+  border-radius: 4px;
+  border: 2px solid #000;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
+  background: #555;
 }
 
-/* --- New Loader Animation --- */
-.loader {
-  --color-one: #ffbf48;
-  --color-two: #be4a1d;
-  --color-three: #ffbf4780;
-  --color-four: #bf4a1d80;
-  --color-five: #ffbf4740;
-  --time-animation: 2s;
-  --size: 1;
-  /* You can change the size */
-  position: relative;
-  border-radius: 50%;
-  transform: scale(var(--size));
-  box-shadow:
-    0 0 25px 0 var(--color-three),
-    0 20px 50px 0 var(--color-four);
-  animation: colorize calc(var(--time-animation) * 3) ease-in-out infinite;
+/* --- Utilities --- */
+.border-b-subtle {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.loader::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  border-top: solid 1px var(--color-one);
-  border-bottom: solid 1px var(--color-two);
-  background: linear-gradient(180deg, var(--color-five), var(--color-four));
-  box-shadow:
-    inset 0 10px 10px 0 var(--color-three),
-    inset 0 -10px 10px 0 var(--color-four);
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-.loader .box {
-  width: 100px;
-  height: 100px;
-  background: linear-gradient(180deg,
-      var(--color-one) 30%,
-      var(--color-two) 70%);
-  mask: url(#clipping);
-  -webkit-mask: url(#clipping);
-}
-
-.loader svg {
-  position: absolute;
-}
-
-.loader svg #clipping {
-  filter: contrast(15);
-  animation: roundness calc(var(--time-animation) / 2) linear infinite;
-}
-
-.loader svg #clipping polygon {
-  filter: blur(7px);
-}
-
-.loader svg #clipping polygon:nth-child(1) {
-  transform-origin: 75% 25%;
-  transform: rotate(90deg);
-}
-
-.loader svg #clipping polygon:nth-child(2) {
-  transform-origin: 50% 50%;
-  animation: rotation var(--time-animation) linear infinite reverse;
-}
-
-.loader svg #clipping polygon:nth-child(3) {
-  transform-origin: 50% 60%;
-  animation: rotation var(--time-animation) linear infinite;
-  animation-delay: calc(var(--time-animation) / -3);
-}
-
-.loader svg #clipping polygon:nth-child(4) {
-  transform-origin: 40% 40%;
-  animation: rotation var(--time-animation) linear infinite reverse;
-}
-
-.loader svg #clipping polygon:nth-child(5) {
-  transform-origin: 40% 40%;
-  animation: rotation var(--time-animation) linear infinite reverse;
-  animation-delay: calc(var(--time-animation) / -2);
-}
-
-.loader svg #clipping polygon:nth-child(6) {
-  transform-origin: 60% 40%;
-  animation: rotation var(--time-animation) linear infinite;
-}
-
-.loader svg #clipping polygon:nth-child(7) {
-  transform-origin: 60% 40%;
-  animation: rotation var(--time-animation) linear infinite;
-  animation-delay: calc(var(--time-animation) / -1.5);
-}
-
-@keyframes rotation {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes roundness {
-  0% {
-    filter: contrast(15);
-  }
-
-  20% {
-    filter: contrast(3);
-  }
-
-  40% {
-    filter: contrast(3);
-  }
-
-  60% {
-    filter: contrast(15);
-  }
-
-  100% {
-    filter: contrast(15);
-  }
-}
-
-@keyframes colorize {
-  0% {
-    filter: hue-rotate(0deg);
-  }
-
-  20% {
-    filter: hue-rotate(-30deg);
-  }
-
-  40% {
-    filter: hue-rotate(-60deg);
-  }
-
-  60% {
-    filter: hue-rotate(-90deg);
-  }
-
-  80% {
-    filter: hue-rotate(-45deg);
-  }
-
-  100% {
-    filter: hue-rotate(0deg);
-  }
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
