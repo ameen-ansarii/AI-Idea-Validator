@@ -38,6 +38,7 @@
 - **🛡️ Honest Feedback**: No fluff. Just brutal, data-driven truths about your idea.
 - **🏗️ MVP Guidance**: Clear steps on what to build first.
 - **⚖️ Final Verdict**: A probability-based assessment: **Build, Pivot, or Drop**.
+- **🔥 Roast Mode**: Switch to "Safe Mode" off for a savage, roasting breakdown of why your idea might fail.
 - **🎨 Glassmorphism UI**: A stunning, modern interface inspired by macOS aesthetics.
 
 ## 📸 Screenshots
@@ -48,18 +49,23 @@
 </div>
 
 <div align="center">
-  <img src="public/readme-assets/thinking-state.png" alt="AI Analysis in Progress" width="800" style="border-radius: 10px; margin-bottom: 20px;" />
-  <p><i>Real-time analysis: The AI crunching data to validate your concept.</i></p>
+  <img src="public/readme-assets/idea-generator.png" alt="Idea Generator" width="800" style="border-radius: 10px; margin-bottom: 20px;" />
+  <p><i>Need inspiration? Spin the wheel to generate unique startup concepts.</i></p>
+</div>
+
+<div align="center">
+  <img src="public/readme-assets/roast-mode.png" alt="Roast Mode Result" width="800" style="border-radius: 10px; margin-bottom: 20px;" />
+  <p><i>🔥 Roast Mode: Brutally honest, sarcastic feedback for those who can handle the heat.</i></p>
 </div>
 
 <div align="center">
   <img src="public/readme-assets/final-verdict.png" alt="Analysis Results and Verdict" width="800" style="border-radius: 10px; margin-bottom: 20px;" />
-  <p><i>Comprehensive results: Verdict, Confidence Score, and Pain Severity.</i></p>
+  <p><i>Comprehensive results: Verdict, Confidence Score, and Challenge Assessment.</i></p>
 </div>
 
 <div align="center">
   <img src="public/readme-assets/about-validator.png" alt="About Section" width="800" style="border-radius: 10px; margin-bottom: 20px;" />
-  <p><i>Transparent breakdown of how the validation works.</i></p>
+  <p><i>Transparent background and methodology.</i></p>
 </div>
 
 ## 🛠️ Tech Stack

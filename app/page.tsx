@@ -384,44 +384,57 @@ function HomeContent() {
               <>
                 {/* 1. Sarcastic Verdict (Full Width) */}
                 <motion.div
-                  className="col-span-1 sm:col-span-2 md:col-span-4 macos-card p-8 bg-[#1a0505] border-red-500/20 relative overflow-hidden"
+                  className="col-span-1 sm:col-span-2 md:col-span-4 macos-card p-8 bg-gradient-to-br from-[#2a0505] via-[#1a0505] to-black border-red-500/50 relative overflow-hidden shadow-[0_0_50px_rgba(220,38,38,0.2)]"
                   initial={{ scale: 0.98, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.05 }}
                 >
-                  <div className="absolute top-0 right-0 p-4 opacity-50">
-                    <Flame className="w-12 h-12 text-red-600/20" />
+                  {/* Animated Fire Effect (CSS Only approximation) */}
+                  <div className="absolute top-0 right-0 p-4 opacity-50 mix-blend-screen animate-pulse">
+                    <Flame className="w-24 h-24 text-red-600 blur-xl" />
                   </div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-red-500 mb-2">The Reality Check</h3>
-                  <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight mb-4">
+                  <div className="absolute -bottom-10 -left-10 p-4 opacity-30 mix-blend-screen">
+                    <Flame className="w-48 h-48 text-orange-600 blur-2xl" />
+                  </div>
+
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-red-500 mb-2 flex items-center gap-2">
+                    <Flame className="w-4 h-4" /> The Reality Check
+                  </h3>
+                  <h2 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 tracking-tight mb-6 mt-2 leading-[1.2]">
                     {report.roast.sarcasticVerdict}
                   </h2>
-                  <p className="text-lg text-red-200/80 italic font-medium leading-relaxed">
-                    "{report.roast.burn}"
-                  </p>
+                  <div className="p-4 bg-red-950/30 border-l-4 border-red-500 rounded-r-lg backdrop-blur-sm">
+                    <p className="text-lg text-red-100 italic font-medium leading-relaxed">
+                      "{report.roast.burn}"
+                    </p>
+                  </div>
                 </motion.div>
 
                 {/* 2. Humorous Analogy */}
                 <motion.div
-                  className="col-span-1 md:col-span-2 macos-card p-6 border-red-500/10"
+                  className="col-span-1 md:col-span-2 macos-card p-6 bg-[#120505] border-red-500/30 shadow-[0_0_30px_rgba(220,38,38,0.1)] hover:border-red-500/50 transition-colors"
                   initial={{ scale: 0.98, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-red-400 mb-3">The "Analogy"</h3>
-                  <p className="text-gray-300 text-lg">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-orange-400 mb-3 flex items-center gap-2">
+                    <Sparkles className="w-3 h-3" /> The "Analogy"
+                  </h3>
+                  <p className="text-gray-200 text-lg font-medium leading-relaxed">
                     {report.roast.humorousAnalogy}
                   </p>
                 </motion.div>
 
                 {/* 3. Roast Summary */}
                 <motion.div
-                  className="col-span-1 md:col-span-2 macos-card p-6 border-red-500/10"
+                  className="col-span-1 md:col-span-2 macos-card p-6 bg-[#120505] border-red-500/30 shadow-[0_0_30px_rgba(220,38,38,0.1)] hover:border-red-500/50 transition-colors"
                   initial={{ scale: 0.98, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.15 }}
                 >
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-red-400 mb-3">Why It Hurts</h3>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-orange-400 mb-3 flex items-center gap-2">
+                    <AlertTriangle className="w-3 h-3" /> Why It Hurts
+                  </h3>
                   <p className="text-gray-300 leading-relaxed">
                     {report.roast.summary}
                   </p>
@@ -431,7 +444,11 @@ function HomeContent() {
 
             {/* 1. Verdict (Large) */}
             <motion.div
-              className="md:col-span-2 md:row-span-2 macos-card p-8 flex flex-col justify-between"
+              className={clsx(
+                "md:col-span-2 md:row-span-2 macos-card p-8 flex flex-col justify-between",
+                // Conditional styling based on report verdict OR mode
+                report.roast ? "border-red-500/20 bg-[#0f0505]" : ""
+              )}
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1 }}
@@ -457,7 +474,10 @@ function HomeContent() {
 
             {/* 2. Viability Score (was Confidence) */}
             <motion.div
-              className="md:col-span-1 md:row-span-1 macos-card p-6 flex flex-col justify-between"
+              className={clsx(
+                "md:col-span-1 md:row-span-1 macos-card p-6 flex flex-col justify-between",
+                report.roast ? "border-red-500/20 bg-[#0a0202]" : ""
+              )}
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -475,14 +495,17 @@ function HomeContent() {
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: report.confidenceScore === 'High' ? '92%' : report.confidenceScore === 'Medium' ? '65%' : '30%' }}
-                  className="h-full bg-white"
+                  className={clsx("h-full", report.roast ? "bg-red-500" : "bg-white")}
                 />
               </div>
             </motion.div>
 
             {/* 3. Problem Urgency (was Pain Level) */}
             <motion.div
-              className="md:col-span-1 md:row-span-1 macos-card p-6 flex flex-col justify-between"
+              className={clsx(
+                "md:col-span-1 md:row-span-1 macos-card p-6 flex flex-col justify-between",
+                report.roast ? "border-red-500/20 bg-[#0a0202]" : ""
+              )}
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -496,19 +519,24 @@ function HomeContent() {
               </div>
               <div className="flex gap-1 mt-4">
                 {[...Array(10)].map((_, i) => (
-                  <div key={i} className={clsx("h-2 flex-1 rounded-sm", i < report.problemSeverity ? "bg-white" : "bg-white/10")} />
+                  <div key={i} className={clsx("h-2 flex-1 rounded-sm",
+                    i < report.problemSeverity ? (report.roast ? "bg-red-500" : "bg-white") : "bg-white/10"
+                  )} />
                 ))}
               </div>
             </motion.div>
 
             {/* 4. Main Challenge (was Failure Risk) */}
             <motion.div
-              className="md:col-span-2 macos-card p-8 bg-[#1a1212] border-white/10"
+              className={clsx(
+                "md:col-span-2 macos-card p-8",
+                report.roast ? "bg-[#1f0505] border-red-500/30" : "bg-[#1a1212] border-white/10"
+              )}
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              <h3 className="flex items-center gap-2 text-red-400/80 font-semibold uppercase tracking-wider text-xs mb-4">
+              <h3 className="flex items-center gap-2 text-red-400 font-semibold uppercase tracking-wider text-xs mb-4">
                 <ShieldAlert className="w-3 h-3" /> Biggest Challenge
               </h3>
               <p className="text-lg text-gray-300">
@@ -518,7 +546,10 @@ function HomeContent() {
 
             {/* 5. Summary */}
             <motion.div
-              className="md:col-span-2 md:row-span-2 macos-card p-8"
+              className={clsx(
+                "md:col-span-2 md:row-span-2 macos-card p-8",
+                report.roast ? "border-red-500/20 bg-[#0f0a0a]" : ""
+              )}
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.5 }}
@@ -536,7 +567,10 @@ function HomeContent() {
 
             {/* 6. Demand Strength (was Market Demand) */}
             <motion.div
-              className="macos-card p-6 flex flex-col justify-between"
+              className={clsx(
+                "macos-card p-6 flex flex-col justify-between",
+                report.roast ? "border-red-500/20 bg-[#0a0202]" : ""
+              )}
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.6 }}
@@ -548,29 +582,42 @@ function HomeContent() {
               <div className="mt-4">
                 <h3 className="text-xl font-bold text-white mb-1">{report.marketDemand}</h3>
                 <div className="flex gap-1 mt-2">
-                  <div className={clsx("h-1 w-8 rounded-full", "bg-white")} />
-                  <div className={clsx("h-1 w-8 rounded-full", ["Medium", "High"].includes(report.marketDemand) ? "bg-white" : "bg-white/10")} />
-                  <div className={clsx("h-1 w-8 rounded-full", report.marketDemand === "High" ? "bg-white" : "bg-white/10")} />
+                  <div className={clsx("h-1 w-8 rounded-full", report.roast ? "bg-red-500" : "bg-white")} />
+                  <div className={clsx("h-1 w-8 rounded-full",
+                    ["Medium", "High"].includes(report.marketDemand) ? (report.roast ? "bg-red-500" : "bg-white") : "bg-white/10"
+                  )} />
+                  <div className={clsx("h-1 w-8 rounded-full",
+                    report.marketDemand === "High" ? (report.roast ? "bg-red-500" : "bg-white") : "bg-white/10"
+                  )} />
                 </div>
               </div>
             </motion.div>
 
             {/* 7. Roadmap Button */}
             <motion.div
-              className="macos-card p-6 flex flex-col justify-center items-center text-center cursor-pointer hover:bg-white/5 transition-colors group"
+              className={clsx(
+                "macos-card p-6 flex flex-col justify-center items-center text-center cursor-pointer transition-colors group",
+                report.roast ? "border-red-500/20 bg-[#0f0505] hover:bg-red-950/30" : "hover:bg-white/5"
+              )}
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.7 }}
               onClick={roadmap ? () => setShowRoadmapModal(true) : handleGenerateRoadmap}
             >
-              <Map className="w-8 h-8 text-gray-400 group-hover:text-white transition-colors mb-2" />
+              <Map className={clsx(
+                "w-8 h-8 transition-colors mb-2",
+                report.roast ? "text-red-400 group-hover:text-red-300" : "text-gray-400 group-hover:text-white"
+              )} />
               <span className="font-medium text-white">{roadmap ? "View Roadmap" : "Create Roadmap"}</span>
-              {isGeneratingRoadmap && <div className="mt-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+              {isGeneratingRoadmap && <div className={clsx("mt-2 w-4 h-4 border-2 border-t-transparent rounded-full animate-spin", report.roast ? "border-red-500" : "border-white")} />}
             </motion.div>
 
             {/* 8. Risks */}
             <motion.div
-              className="md:col-span-2 macos-card p-8"
+              className={clsx(
+                "md:col-span-2 macos-card p-8",
+                report.roast ? "border-red-500/20 bg-[#0f0a0a]" : ""
+              )}
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.8 }}
@@ -583,15 +630,18 @@ function HomeContent() {
 
             {/* 9. Monetization */}
             <motion.div
-              className="md:col-span-2 macos-card p-8"
+              className={clsx(
+                "md:col-span-2 macos-card p-8",
+                report.roast ? "border-red-500/20 bg-[#0f0a0a]" : ""
+              )}
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.9 }}
             >
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-green-500/80 mb-4">Monetization</h3>
+              <h3 className={clsx("text-xs font-semibold uppercase tracking-wider mb-4", report.roast ? "text-red-400/80" : "text-green-500/80")}>Monetization</h3>
               <div className="flex flex-wrap gap-2">
                 {report.monetizationPaths?.map((path, i) => (
-                  <span key={i} className="px-3 py-1.5 border border-white/10 rounded-md text-sm text-gray-300">
+                  <span key={i} className={clsx("px-3 py-1.5 border rounded-md text-sm text-gray-300", report.roast ? "border-red-500/20 bg-red-950/10" : "border-white/10")}>
                     {path}
                   </span>
                 ))}
@@ -600,15 +650,21 @@ function HomeContent() {
 
             {/* 10. Competitors */}
             <motion.div
-              className="md:col-span-2 macos-card p-8"
+              className={clsx(
+                "md:col-span-2 macos-card p-8",
+                report.roast ? "border-red-500/20 bg-[#0f0a0a]" : ""
+              )}
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 1.0 }}
             >
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-blue-500/80 mb-4">Competitors</h3>
+              <h3 className={clsx("text-xs font-semibold uppercase tracking-wider mb-4", report.roast ? "text-red-400/80" : "text-blue-500/80")}>Competitors</h3>
               <div className="flex flex-wrap gap-3">
                 {report.alternatives?.map((alt, i) => (
-                  <div key={i} className="pl-1.5 pr-3 py-1.5 border border-white/10 rounded-full text-sm text-gray-300 flex items-center gap-2 bg-white/5 hover:bg-white/10 transition-colors cursor-default">
+                  <div key={i} className={clsx(
+                    "pl-1.5 pr-3 py-1.5 border rounded-full text-sm text-gray-300 flex items-center gap-2 transition-colors cursor-default",
+                    report.roast ? "border-red-500/10 bg-red-950/10 hover:bg-red-900/20" : "border-white/10 bg-white/5 hover:bg-white/10"
+                  )}>
                     <img
                       src={`https://www.google.com/s2/favicons?domain=${alt.toLowerCase().replace(/\s+/g, '')}.com&sz=64`}
                       alt={alt}
