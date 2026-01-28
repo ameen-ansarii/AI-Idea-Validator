@@ -173,7 +173,7 @@ function HomeContent() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center p-4 md:p-6 relative pt-20 md:pt-32 pb-24 font-sans selection:bg-blue-500/30">
+    <main className="min-h-screen flex flex-col items-center justify-center p-4 md:p-6 relative pb-24 font-sans selection:bg-blue-500/30">
 
       {/* Roast Result Overlay */}
 
@@ -182,7 +182,7 @@ function HomeContent() {
 
       <div className="bg-aurora" />
 
-      <div className="max-w-6xl w-full z-10 transition-all duration-700 ease-[0.16,1,0.3,1]">
+      <div className="max-w-6xl w-full z-10 transition-all duration-700 ease-[0.16,1,0.3,1] flex flex-col items-center">
 
         {/* Header - Linear Style */}
         {!report && !isAnalyzing && (
@@ -191,14 +191,14 @@ function HomeContent() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-24 space-y-8 relative"
+            className="text-center mb-8 md:mb-10 space-y-4 relative w-full max-w-4xl mx-auto"
           >
             {/* Minimal Pill */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md mb-8 hover:bg-white/10 transition-colors cursor-default"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md mb-4 hover:bg-white/10 transition-colors cursor-default"
             >
               <div className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400">
                 <Zap className="w-3 h-3 fill-indigo-400/50" />
@@ -208,17 +208,17 @@ function HomeContent() {
               </span>
             </motion.div>
 
-            <div className="relative z-10 space-y-6">
-              <h1 className="text-4xl sm:text-6xl md:text-8xl font-semibold tracking-tighter text-white leading-[1.1]">
+            <div className="relative z-10 space-y-3">
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-semibold tracking-tighter text-white leading-[1.1]">
                 <MaskedText text="Validate" delay={0.1} />
-                <span className="text-gray-500 ml-2 md:ml-4 block md:inline">Instantly</span>
+                <span className="text-gray-500 ml-2 md:ml-3 block md:inline">Instantly</span>
               </h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="text-base sm:text-xl text-gray-400 max-w-2xl mx-auto font-normal leading-relaxed px-4"
+                className="text-base sm:text-lg text-gray-400 max-w-xl mx-auto font-normal leading-relaxed px-4"
               >
                 Data-driven feedback on your startup idea.{" "}
                 <span className="text-gray-200 block md:inline">No sugar coating. Just truth.</span>
@@ -235,11 +235,11 @@ function HomeContent() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, filter: "blur(10px)" }}
               transition={{ duration: 0.5, ease: "circOut" }}
-              className="max-w-4xl mx-auto w-full"
+              className="max-w-2xl mx-auto w-full"
             >
               <div className="macos-card p-1.5 rounded-2xl relative overflow-visible">
                 <div className={clsx(
-                  "bg-[#050505] rounded-[10px] p-4 md:p-10 border transition-colors duration-500 relative",
+                  "bg-[#050505] rounded-[10px] p-4 md:p-6 border transition-colors duration-500 relative",
                   isRoastMode ? "border-red-500/20" : "border-white/5"
                 )}>
                   {isRoastMode && (
@@ -251,12 +251,12 @@ function HomeContent() {
                     onChange={(e) => setIdea(e.target.value)}
                     placeholder={isRoastMode ? "Give me your worst idea... I dare you." : "Describe your startup idea..."}
                     className={clsx(
-                      "w-full h-24 md:h-40 bg-transparent border-none text-base md:text-2xl placeholder-gray-700 resize-none focus:ring-0 focus:outline-none font-medium leading-relaxed tracking-tight transition-colors",
+                      "w-full h-16 md:h-24 bg-transparent border-none text-base md:text-xl placeholder-gray-700 resize-none focus:ring-0 focus:outline-none font-medium leading-relaxed tracking-tight transition-colors",
                       isRoastMode ? "text-red-50" : "text-white"
                     )}
                   />
 
-                  <div className="flex flex-row justify-between items-center mt-4 pt-4 md:mt-8 md:pt-6 border-t border-white/5 gap-4">
+                  <div className="flex flex-row justify-between items-center mt-3 pt-3 md:mt-4 md:pt-4 border-t border-white/5 gap-4">
                     <div className="flex items-center gap-3 text-xs font-medium text-gray-600 w-auto justify-start">
                       {/* Simple Clean Toggle */}
                       <div
