@@ -75,29 +75,7 @@
 - **AI Model**: Google Gemini 2.0 Flash
 - **State Management**: React Hooks
 
-## 🚀 Getting Started
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/ameen-ansarii/AI-Idea-Validator.git
-   cd AI-Idea-Validator
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Set up Environment Variables**:
-   Create a `.env.local` file and add your Gemini API key:
-   ```bash
-   NEXT_PUBLIC_GEMINI_API_KEY=your_api_key_here
-   ```
-
-4. **Run the development server**:
-   ```bash
-   npm run dev
-   ```
 
 ## 📄 License
 
