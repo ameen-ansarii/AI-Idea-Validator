@@ -17,6 +17,12 @@ export interface ValidationReport {
     confidenceJustification: string;
     whyItFails: string; // "Why this usually fails"
     whoShouldNotBuild: string; // "Who should NOT build this"
+    roast?: {
+        summary: string;
+        sarcasticVerdict: string;
+        humorousAnalogy: string;
+        burn: string;
+    };
 }
 
 export interface CompetitiveAnalysis {

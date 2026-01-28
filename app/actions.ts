@@ -17,10 +17,10 @@ const getGroq = () => {
     });
 };
 
-export async function validateIdea(idea: string): Promise<ValidationReport> {
+export async function validateIdea(idea: string, mode: "default" | "roast" = "default"): Promise<ValidationReport> {
     const client = getGroq();
 
-    const systemPrompt = `You are an expert startup analyst and product validator. 
+    let systemPrompt = `You are an expert startup analyst and product validator. 
 Your task is to provide a strict, realistic, non-motivational evaluation of a startup idea.
 
 Rules:
@@ -48,6 +48,42 @@ You MUST respond with ONLY a valid JSON object matching this exact schema:
   "whyItFails": "string",
   "whoShouldNotBuild": "string"
 }`;
+
+    if (mode === 'roast') {
+        systemPrompt = `You are a savage, cynical, witty, and brutally honest startup validator (ROAST MODE ACTIVE).
+Your task is to provide a strict, realistic evaluation, but wrapped in top-tier sarcasm, internet culture references, and dark humor.
+
+Rules:
+- Be Witty & Sarcastic: Use modern slang (e.g., "vaporware", "mid", "touch grass").
+- Be Brutally Honest: If the idea sucks, destroy it verbally.
+- ACCURACY IS KEY: Even though you are roasting, the *ratings* (score, demand, etc.) must be realistic based on market data. Do not rate it low just to be mean, rate it accurately, but describe it with sass.
+
+You MUST respond with ONLY a valid JSON object matching this exact schema:
+{
+  "summary": "string (A short, stinging paragraph roasting the concept)",
+  "targetUsers": "string",
+  "problemSeverity": number (1-10),
+  "severityJustification": "string",
+  "marketDemand": "string (High/Medium/Low)",
+  "demandJustification": "string",
+  "monetizationPaths": ["string"],
+  "alternatives": ["string"],
+  "risks": "string",
+  "mvpScope": "string",
+  "verdict": "string (Promising/Questionable/Weak)",
+  "verdictJustification": "string",
+  "confidenceScore": "string (1-10)",
+  "confidenceJustification": "string",
+  "whyItFails": "string",
+  "whoShouldNotBuild": "string",
+  "roast": {
+    "summary": "Full roast paragraph",
+    "sarcasticVerdict": "Funny title (e.g., 'Tinder for Rocks')",
+    "humorousAnalogy": "Analogy (e.g., 'Like Uber but for people who hate themselves')",
+    "burn": "Savage one-liner"
+  }
+}`;
+    }
 
     try {
         console.log("🚀 Starting validation with Groq...");
@@ -267,6 +303,68 @@ You MUST respond with ONLY a valid JSON object in this exact format:
     } catch (error: any) {
         console.error("Market Size Error:", error);
         throw new Error("Failed to calculate market size.");
+    }
+}
+
+export async function roastIdea(idea: string): Promise<string> {
+    const client = getGroq();
+    const prompt = `
+    You are a savage, cynical, and brutally honest startup venture capitalist who has seen it all. 
+    Roast the following startup idea. Be mean, funny, and devastatingly accurate about why it might fail. 
+    Don't hold back. Use slang like "vaporware", "feature not a product", "solution in search of a problem".
+    Keep it under 300 characters.
+
+    Idea: "${idea}"
+  `;
+
+    try {
+        const completion = await client.chat.completions.create({
+            model: MODEL_NAME,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 1, // High temp for creativity
+            max_tokens: 300,
+        });
+        return completion.choices[0]?.message?.content || "Your idea is so bad I can't even roast it. (AI Error)";
+    } catch (error) {
+        console.error("Roast error:", error);
+        return "Your idea is so bad I can't even roast it. (AI Error)";
+    }
+}
+
+export async function generateBrandVibe(idea: string): Promise<{ colors: string[], fontPair: string, slogan: string, designStyle: string }> {
+    const client = getGroq();
+    const prompt = `
+    For the following startup idea, generate a "Brand Vibe" kit.
+    Return strictly a JSON object with these fields:
+    - colors: array of 4 hex codes (e.g. ["#ffffff", ...]) that fit the mood.
+    - fontPair: a string describing a font pairing (e.g. "Space Mono + Inter").
+    - slogan: a punchy, 3-5 word slogan.
+    - designStyle: a short 2-3 word description of the aesthetic (e.g. "Corporate Memphis", "Cyberpunk Neon", "Minimalist Swiss").
+
+    Idea: "${idea}"
+    
+    Response must be valid JSON only. Do not wrap in markdown blocks.
+  `;
+
+    try {
+        const completion = await client.chat.completions.create({
+            model: MODEL_NAME,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.8,
+            max_tokens: 500,
+        });
+
+        const response = completion.choices[0]?.message?.content || "{}";
+        const cleanContent = response.replace(/```json\n?|\n?```/g, "").trim();
+        return JSON.parse(cleanContent);
+    } catch (error) {
+        console.error("Brand vibe error:", error);
+        return {
+            colors: ["#000000", "#333333", "#666666", "#999999"],
+            fontPair: "Arial + Times",
+            slogan: "Just build it.",
+            designStyle: "Generic Fallback"
+        };
     }
 }
 

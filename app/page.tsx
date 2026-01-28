@@ -2,10 +2,10 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowRight, AlertTriangle, TrendingUp, Target, ShieldAlert, Layers, Sparkles, AlertOctagon, DollarSign, Users, Download, RefreshCw, Map, Lock, Share2, Check, BarChart3, Zap } from "lucide-react";
+import { ArrowRight, AlertTriangle, TrendingUp, Target, ShieldAlert, Layers, Sparkles, AlertOctagon, DollarSign, Users, Download, RefreshCw, Map, Lock, Share2, Check, BarChart3, Zap, Flame, Palette } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
-import { validateIdea, pivotIdea, generateRoadmap, analyzeCompetitors, calculateMarketSize } from "./actions";
+import { validateIdea, pivotIdea, generateRoadmap, analyzeCompetitors, calculateMarketSize, roastIdea, generateBrandVibe } from "./actions";
 import { ValidationReport, CompetitiveAnalysis as CompetitiveAnalysisType, MarketSize } from "./types";
 import Dock from "./components/Dock/Dock";
 import MaskedText from "./components/MaskedText";
@@ -14,6 +14,10 @@ import ExampleIdeas from "./components/ExampleIdeas";
 import CompetitiveAnalysis from "./components/CompetitiveAnalysis";
 import MarketSizeCalculator from "./components/MarketSizeCalculator";
 import OnboardingTutorial from "./components/OnboardingTutorial";
+import IdeaSlotMachine from "./components/IdeaSlotMachine";
+import TrendTicker from "./components/TrendTicker";
+import RoastCard from "./components/RoastCard";
+import BrandVibe from "./components/BrandVibe";
 import { generatePDF } from "./utils/generatePDF";
 
 function HomeContent() {
@@ -30,72 +34,23 @@ function HomeContent() {
   const [isAnalyzingCompetitors, setIsAnalyzingCompetitors] = useState(false);
   const [marketSize, setMarketSize] = useState<MarketSize | null>(null);
   const [isCalculatingMarket, setIsCalculatingMarket] = useState(false);
+  const [isRoastMode, setIsRoastMode] = useState(false);
+  const [brandVibeResult, setBrandVibeResult] = useState<{ colors: string[], fontPair: string, slogan: string, designStyle: string } | null>(null);
+  const [isGeneratingVibe, setIsGeneratingVibe] = useState(false);
 
   const searchParams = useSearchParams();
   const router = useRouter();
   const historyId = searchParams.get('historyId');
 
-  // Load History Logic
-  useEffect(() => {
-    if (historyId) {
-      try {
-        const history = JSON.parse(localStorage.getItem('idea_history') || '[]');
-        const entry = history.find((h: any) => h.id === historyId);
-        if (entry) {
-          setIdea(entry.idea);
-          // Directly set report to skip analysis animation, or maybe separate state?
-          // For now, simple restore.
-          setReport(entry.report);
-          // Clear URL param
-          router.replace('/', { scroll: false });
-        }
-      } catch (e) {
-        console.error("Failed to load history item", e);
-      }
-    }
-  }, [historyId, router]);
-
-  // Save to History Vault
-  useEffect(() => {
-    if (report && idea) {
-      try {
-        const history = JSON.parse(localStorage.getItem('idea_history') || '[]');
-        // Check if report already exists to avoid duplicates on re-renders
-        const exists = history.some((h: any) => h.report.summary === report.summary);
-        if (!exists) {
-          const newEntry = {
-            idea,
-            report,
-            date: new Date().toISOString(),
-            id: Date.now().toString()
-          };
-          const updated = [newEntry, ...history].slice(0, 50); // Keep last 50
-          localStorage.setItem('idea_history', JSON.stringify(updated));
-        }
-      } catch (e) {
-        console.error("Failed to save history", e);
-      }
-    }
-  }, [report]);
+  // ... existing useEffects ...
 
   const handleShare = async () => {
+    // ... existing share logic ...
     if (!report) return;
-
     try {
-      // 1. Create a compact object for sharing
-      const shareData = {
-        idea,
-        report,
-        timestamp: Date.now()
-      };
-
-      // 2. Encode to Base64 (simple compression)
+      const shareData = { idea, report, timestamp: Date.now() };
       const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(shareData))));
-
-      // 3. Construct URL
       const url = `${window.location.origin}/share?data=${encoded}`;
-
-      // 4. Share or Copy
       if (navigator.share) {
         await navigator.share({
           title: 'Idea Validator Report',
@@ -114,26 +69,42 @@ function HomeContent() {
 
   const handleAnalyze = async () => {
     if (!idea.trim()) return;
+
     setIsAnalyzing(true);
     setReport(null);
     setPivot(null);
     setRoadmap(null);
     setCompetitiveAnalysis(null);
     setMarketSize(null);
+    setBrandVibeResult(null);
 
     try {
-      // Minimum 7s wait for the "Theater" effect
+      // Minimum 5s wait for the "Theater" effect, slightly faster
       const [result] = await Promise.all([
-        validateIdea(idea),
-        new Promise(resolve => setTimeout(resolve, 7000))
+        validateIdea(idea, isRoastMode ? 'roast' : 'default'),
+        new Promise(resolve => setTimeout(resolve, 5000))
       ]);
 
       setReport(result);
     } catch (error) {
       console.error("Validation failed", error);
-      alert("Analysis failed. Please check your API usage or try again."); // Simple feedback
+      alert("Analysis failed. Please check your API usage or try again.");
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleGenerateBrandVibe = async () => {
+    if (!idea) return;
+    setIsGeneratingVibe(true);
+    try {
+      const vibe = await generateBrandVibe(idea);
+      setBrandVibeResult(vibe);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to generate brand vibe.");
+    } finally {
+      setIsGeneratingVibe(false);
     }
   };
 
@@ -202,7 +173,10 @@ function HomeContent() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center p-4 md:p-6 relative pt-20 md:pt-32 font-sans selection:bg-blue-500/30">
+    <main className="min-h-screen flex flex-col items-center p-4 md:p-6 relative pt-20 md:pt-32 pb-24 font-sans selection:bg-blue-500/30">
+
+      {/* Roast Result Overlay */}
+
 
       <Dock />
 
@@ -263,31 +237,82 @@ function HomeContent() {
               transition={{ duration: 0.5, ease: "circOut" }}
               className="max-w-4xl mx-auto w-full"
             >
-              <div className="macos-card p-1.5 rounded-2xl">
-                <div className="bg-[#050505] rounded-[10px] p-5 md:p-10 border border-white/5">
+              <div className="macos-card p-1.5 rounded-2xl relative overflow-visible">
+                <div className={clsx(
+                  "bg-[#050505] rounded-[10px] p-4 md:p-10 border transition-colors duration-500 relative",
+                  isRoastMode ? "border-red-500/20" : "border-white/5"
+                )}>
+                  {isRoastMode && (
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500/50 to-transparent opacity-50" />
+                  )}
+
                   <textarea
                     value={idea}
                     onChange={(e) => setIdea(e.target.value)}
-                    placeholder="Describe your startup idea..."
-                    className="w-full h-32 md:h-40 bg-transparent border-none text-lg md:text-2xl text-white placeholder-gray-700 resize-none focus:ring-0 focus:outline-none font-medium leading-relaxed tracking-tight"
+                    placeholder={isRoastMode ? "Give me your worst idea... I dare you." : "Describe your startup idea..."}
+                    className={clsx(
+                      "w-full h-24 md:h-40 bg-transparent border-none text-base md:text-2xl placeholder-gray-700 resize-none focus:ring-0 focus:outline-none font-medium leading-relaxed tracking-tight transition-colors",
+                      isRoastMode ? "text-red-50" : "text-white"
+                    )}
                   />
 
-                  <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/5">
-                    <div className="hidden sm:flex items-center gap-4 text-xs font-medium text-gray-600">
-                      <span>Live Analysis</span>
-                      <span className="w-1 h-1 rounded-full bg-gray-800" />
-                      <span>Market Intelligence</span>
-                      <span className="w-1 h-1 rounded-full bg-gray-800" />
-                      <span>Competitor Scan</span>
+                  <div className="flex flex-row justify-between items-center mt-4 pt-4 md:mt-8 md:pt-6 border-t border-white/5 gap-4">
+                    <div className="flex items-center gap-3 text-xs font-medium text-gray-600 w-auto justify-start">
+                      {/* Simple Clean Toggle */}
+                      <div
+                        onClick={() => setIsRoastMode(!isRoastMode)}
+                        className="flex items-center gap-3 cursor-pointer group select-none"
+                      >
+                        <div className={clsx(
+                          "w-10 h-5 rounded-full p-0.5 transition-colors duration-300 relative border",
+                          isRoastMode
+                            ? "bg-red-900/20 border-red-500/50"
+                            : "bg-white/5 border-white/10 group-hover:border-white/30"
+                        )}>
+                          <motion.div
+                            layout
+                            transition={{ type: "spring", stiffness: 700, damping: 30 }}
+                            className={clsx(
+                              "w-4 h-4 rounded-full shadow-sm",
+                              isRoastMode ? "bg-red-500" : "bg-gray-400"
+                            )}
+                            animate={{ x: isRoastMode ? 20 : 0 }}
+                          />
+                        </div>
+                        <span className={clsx(
+                          "transition-colors duration-300",
+                          isRoastMode ? "text-red-400 font-semibold" : "text-gray-500 group-hover:text-gray-300"
+                        )}>
+                          {isRoastMode ? "🔥 Roast Mode Active" : "Safe Mode"}
+                        </span>
+                      </div>
                     </div>
 
                     <button
                       onClick={handleAnalyze}
-                      disabled={!idea.trim()}
-                      className="liquid-button px-6 py-3 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+                      disabled={!idea.trim() || isAnalyzing}
+                      className={clsx(
+                        "liquid-button px-4 py-2.5 md:px-6 md:py-3 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300",
+                        isRoastMode ? "bg-red-600 hover:bg-red-700 hover:shadow-[0_0_20px_rgba(220,38,38,0.4)] text-white border-red-500/50" : ""
+                      )}
                     >
-                      <span>Validate Idea</span>
-                      <ArrowRight className="w-4 h-4" />
+                      {isAnalyzing ? (
+                        <>
+                          <span>{isRoastMode ? "Roasting..." : "Analyzing..."}</span>
+                          <Flame className={clsx("w-4 h-4", isRoastMode ? "animate-pulse" : "hidden")} />
+                          {!isRoastMode && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                        </>
+                      ) : isRoastMode ? (
+                        <>
+                          <span>Roast My Idea</span>
+                          <Flame className="w-4 h-4" />
+                        </>
+                      ) : (
+                        <>
+                          <span>Validate Idea</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -353,6 +378,56 @@ function HomeContent() {
                 </button>
               </div>
             </motion.div>
+
+            {/* ROAST MODE CARDS */}
+            {report.roast && (
+              <>
+                {/* 1. Sarcastic Verdict (Full Width) */}
+                <motion.div
+                  className="col-span-1 sm:col-span-2 md:col-span-4 macos-card p-8 bg-[#1a0505] border-red-500/20 relative overflow-hidden"
+                  initial={{ scale: 0.98, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.05 }}
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-50">
+                    <Flame className="w-12 h-12 text-red-600/20" />
+                  </div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-red-500 mb-2">The Reality Check</h3>
+                  <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight mb-4">
+                    {report.roast.sarcasticVerdict}
+                  </h2>
+                  <p className="text-lg text-red-200/80 italic font-medium leading-relaxed">
+                    "{report.roast.burn}"
+                  </p>
+                </motion.div>
+
+                {/* 2. Humorous Analogy */}
+                <motion.div
+                  className="col-span-1 md:col-span-2 macos-card p-6 border-red-500/10"
+                  initial={{ scale: 0.98, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-red-400 mb-3">The "Analogy"</h3>
+                  <p className="text-gray-300 text-lg">
+                    {report.roast.humorousAnalogy}
+                  </p>
+                </motion.div>
+
+                {/* 3. Roast Summary */}
+                <motion.div
+                  className="col-span-1 md:col-span-2 macos-card p-6 border-red-500/10"
+                  initial={{ scale: 0.98, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.15 }}
+                >
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-red-400 mb-3">Why It Hurts</h3>
+                  <p className="text-gray-300 leading-relaxed">
+                    {report.roast.summary}
+                  </p>
+                </motion.div>
+              </>
+            )}
 
             {/* 1. Verdict (Large) */}
             <motion.div
@@ -596,7 +671,33 @@ function HomeContent() {
                   <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors" />
                 )}
               </button>
+
+              <button
+                onClick={handleGenerateBrandVibe}
+                disabled={isGeneratingVibe}
+                className="macos-card p-6 flex items-center justify-between hover:bg-white/5 transition-all disabled:opacity-50 group md:col-span-2"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 flex items-center justify-center group-hover:border-indigo-500/40 transition-colors">
+                    <Palette className="w-5 h-5 text-indigo-400 group-hover:text-indigo-200 transition-colors" />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-semibold text-white">Brand Vibe Check</h4>
+                    <p className="text-sm text-gray-500">Generate aesthetic & slogan</p>
+                  </div>
+                </div>
+                {isGeneratingVibe ? (
+                  <div className="w-5 h-5 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" />
+                ) : (
+                  <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors" />
+                )}
+              </button>
             </motion.div>
+
+            {/* Brand Vibe Result */}
+            {brandVibeResult && (
+              <BrandVibe data={brandVibeResult} />
+            )}
 
             {/* AI Pivot Generator - Linear Style */}
             <motion.div
@@ -666,8 +767,21 @@ function HomeContent() {
 
         {/* Example Ideas Section - Show when no report */}
         {!report && !isAnalyzing && (
-          <ExampleIdeas onSelectIdea={handleSelectExampleIdea} />
+          <>
+            <ExampleIdeas onSelectIdea={handleSelectExampleIdea} />
+            <IdeaSlotMachine onValidate={(generatedIdea) => {
+              setIdea(generatedIdea);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }} />
+          </>
         )}
+      </div>
+
+      {/* Fixed Bottom Ticker */}
+      <div className="fixed bottom-0 left-0 w-full z-40 pointer-events-none">
+        <div className="pointer-events-auto">
+          <TrendTicker />
+        </div>
       </div>
 
       {/* Fullscreen Roadmap Modal */}
